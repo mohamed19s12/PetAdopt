@@ -1,0 +1,47 @@
+﻿using Microsoft.EntityFrameworkCore;
+using PetAdopt.Application.Interfaces.Repositories;
+using PetAdopt.Domain.Entities;
+using PetAdopt.Persistence.Context;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PetAdopt.Persistence.Repositories
+{
+    public class AdoptionRequestRepository : IAdoptionRequestRepository
+    {
+        private readonly AppDbContext _context;
+
+        public AdoptionRequestRepository(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task AddAsync(AdoptionRequest request)
+        {
+            await _context.AdoptionRequests.AddAsync(request);
+        }
+
+        public async Task<AdoptionRequest> GetByIdAsync(int id)
+        {
+            return await _context.AdoptionRequests
+                .Include(a => a.Pet)
+                .FirstOrDefaultAsync(a => a.Id == id);
+        }
+
+        public Task<List<AdoptionRequest>> GetByOwnerIdAsync(string ownerId)
+        {
+            return _context.AdoptionRequests
+                .Include(a => a.Pet)
+                .Where(a => a.Pet.OwnerId == ownerId)
+                .ToListAsync();
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
+}
