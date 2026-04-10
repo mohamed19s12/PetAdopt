@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using PetAdopt.Application.DTOs.Auth;
+using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
 using PetAdopt.Domain.Entities;
 using System;
@@ -19,19 +22,25 @@ namespace PetAdopt.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ITokenService _tokenService;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
 
         public AuthService(
-            UserManager<ApplicationUser> userManager, IConfiguration configuration , RoleManager<IdentityRole> roleManager)
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration,
+            RoleManager<IdentityRole> roleManager,
+            ITokenService tokenService,
+            IRefreshTokenRepository refreshTokenRepository)
         {
             _userManager = userManager;
             _configuration = configuration;
             _roleManager = roleManager;
+            _tokenService = tokenService;
+            _refreshTokenRepository = refreshTokenRepository;
         }
 
-
-        public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
+        public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto, HttpResponse response)
         {
-            //Mapping RegisterDto to ApplicationUser
             var user = new ApplicationUser
             {
                 UserName = dto.Email,
@@ -39,100 +48,93 @@ namespace PetAdopt.Infrastructure.Services
                 FullName = dto.FullName,
                 IsApproved = false
             };
-            //Create user with UserManager
-            var result = await _userManager.CreateAsync(user, dto.Password);
 
-            //Check if user creation succeeded
+            var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 throw new Exception($"User registration failed: {errors}");
             }
-            //if there is no role ... create it
-            if (!await _roleManager.RoleExistsAsync(dto.Role))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(dto.Role));
-            }
 
-            //Assign role to user
+            if (!await _roleManager.RoleExistsAsync(dto.Role))
+                await _roleManager.CreateAsync(new IdentityRole(dto.Role));
+
             await _userManager.AddToRoleAsync(user, dto.Role);
 
-            //I Will Implement It at bellow
-            var token =await GenerateToken(user);
+            var accessToken = await _tokenService.CreateAccessToken(user);
+            var refreshToken = await _tokenService.CreateRefreshToken();
 
-            return new AuthResponseDto
+            await _refreshTokenRepository.AddAsync(new RefreshToken
             {
-                Token = token,
-                Email = user.Email
-            };
+                Token = refreshToken,
+                UserId = user.Id,
+                ExpiresOn = DateTime.UtcNow.AddDays(30)
+            });
+            await _refreshTokenRepository.SaveChangesAsync();
 
+            response.Cookies.Append("jwt", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddMinutes(15)
+            });
+
+            response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(30)
+            });
+
+            return new AuthResponseDto { Email = user.Email, Token = accessToken };
         }
 
-        public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
+        public async Task<AuthResponseDto> LoginAsync(LoginDto dto, HttpResponse response)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);
-
-            //Check if user exists and password is correct
-            if (user == null || !await _userManager.CheckPasswordAsync(user , dto.Password) )
-            {
+            if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
                 throw new Exception("Invalid email or password");
-            }
 
-            //Check if user is approved
             if (!user.IsApproved)
+                throw new Exception($"Your account is not approved yet. {user.Id}");
+
+            var accessToken = await _tokenService.CreateAccessToken(user);
+            var refreshToken = await _tokenService.CreateRefreshToken();
+
+            await _refreshTokenRepository.AddAsync(new RefreshToken
             {
-                throw new Exception($"Your account is not approved yet. Please wait for admin approval. {user.Id}");
-            }
+                Token = refreshToken,
+                UserId = user.Id,
+                ExpiresOn = DateTime.UtcNow.AddDays(30)
+            });
+            await _refreshTokenRepository.SaveChangesAsync();
 
-            var token = await GenerateToken(user);
-
-            return new AuthResponseDto
+            response.Cookies.Append("jwt", accessToken, new CookieOptions
             {
-                Email = user.Email,
-                Token = token
-            };
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddMinutes(15)
+            });
 
+            response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(30)
+            });
+
+            return new AuthResponseDto { Email = user.Email, Token = accessToken };
         }
 
-        //Generate JWT Token That i used in both Register and Login
-        public async Task<string> GenerateToken(ApplicationUser user)
+        public Task LogoutAsync(HttpResponse response)
         {
-            //Cliams
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FullName)
-            };
-
-            //Add roles to claims
-            var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            //Key
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
-
-            //Credentials
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            //Descriptor
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:Issuer"],
-                audience: _configuration["JWT:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(
-                    double.Parse(_configuration["JWT:DurationInMinutes"])
-                    ),
-                signingCredentials: creds
-                );
- 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            response.Cookies.Delete("refreshToken");
+            response.Cookies.Delete("jwt");
+            return Task.CompletedTask;
         }
-
-
     }
 }

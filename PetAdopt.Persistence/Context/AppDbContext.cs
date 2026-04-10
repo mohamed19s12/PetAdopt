@@ -21,6 +21,8 @@ namespace PetAdopt.Persistence.Context
         public DbSet<AdoptionRequest> AdoptionRequests { get; set; }
         public DbSet<PetImage> PetImages { get; set; }
 
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -50,19 +52,27 @@ namespace PetAdopt.Persistence.Context
                 .HasOne(f => f.Pet)
                 .WithMany()
                 .HasForeignKey(f => f.PetId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AdoptionRequest>()
                 .HasOne(a => a.Pet)
                 .WithMany()
                 .HasForeignKey(a => a.PetId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<AdoptionRequest>()
                 .HasOne(a => a.Adopter)
                 .WithMany()
                 .HasForeignKey(a => a.AdoprerId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PetImage>()
+                .HasOne(pi => pi.Pet)
+                .WithMany(p => p.Images)
+                .HasForeignKey(pi => pi.PetId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
         }
     }
 }

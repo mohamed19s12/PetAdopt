@@ -45,10 +45,12 @@ namespace PetAdopt.Application.Services
         public async Task ApproveAsync(int petId)
         {
             var pet = await _petRepository.GetByIdAsync(petId);
-
-            //if pet is null, throw an exception else update its status to approved
             if (pet == null)
                 throw new Exception("Pet not found");
+
+            //if pet has approved status then not change
+            if (pet.Status == PetStatus.Approved)
+                throw new Exception("Pet is already approved");
 
             pet.Status = PetStatus.Approved;
             await _petRepository.SaveChangesAsync();
@@ -57,7 +59,7 @@ namespace PetAdopt.Application.Services
 
         public async Task<List<PetDto>> GetAllAsync()
         {
-            var pets = await _petRepository.GetAllApproovedAsync();
+            var pets = await _petRepository.GetAllAsync();
             return  pets.Select(p => new PetDto
             {
                 Id = p.Id,
@@ -69,5 +71,89 @@ namespace PetAdopt.Application.Services
             }).ToList();
         }
 
+        public async Task<PetDto> GetByIdAsync(int petId)
+        {
+            var pet = await _petRepository.GetByIdAsync(petId);
+
+            if (pet == null)
+                throw new Exception("Pet not found");
+
+            return new PetDto
+            {
+                Id = pet.Id,
+                Name = pet.Name,
+                Breed = pet.Breed,
+                Location = pet.Location,
+                Status = pet.Status.ToString()
+            };
+        }
+
+        public async Task UpdateAsync(int petId, UpdatePetDto dto, string userId)
+        {
+            var pet = await _petRepository.GetByIdAsync(petId);
+
+            if (pet == null)
+            {
+                throw new Exception("Pet Not Found");
+            }
+
+            // Check if the user is the owner of the pet
+            if (pet.OwnerId != userId)
+            {
+                throw new Exception("You Not Own This Pet!");
+            }
+
+            // Update the pet properties
+            pet.Name = dto.Name;
+            pet.Age = dto.Age;
+            pet.Breed = dto.Breed;
+            pet.Gender = dto.Gender;
+            pet.HealthStatus = dto.HealthStatus;
+            pet.Description = dto.Description;
+            pet.Location = dto.Location;
+
+            await _petRepository.UpdateAsync(pet);
+            await _petRepository.SaveChangesAsync();
+
+        }
+
+        public async Task DeleteAsync(int petId, string userId)
+        {
+            
+            var pet = await _petRepository.GetByIdAsync(petId);
+            if (pet == null)
+            {
+                throw new Exception("Pet Not Found");
+            }
+            // Check if the user is the owner of the pet
+            if (pet.OwnerId != userId)
+            {
+                throw new Exception("You Not Own This Pet!");
+            }
+            await _petRepository.DeleteAsync(petId);
+            await _petRepository.SaveChangesAsync();
+        }
+
+        public async Task<PageResultDto<PetDto>> SearchAsync(PetFilterDto filter)
+        {
+            var (pets, totalCount) = await _petRepository.SearchAsync(filter);
+
+
+            return new PageResultDto<PetDto>
+            {
+                Items = pets.Select(p => new PetDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Breed = p.Breed,
+                    Location = p.Location,
+                    Status = p.Status.ToString(),
+                    Age = p.Age
+                }).ToList() ,
+                TotalCount = totalCount,
+                Page = filter.Page,
+                PageSize = filter.PageSize
+            };
+        }
     }
 }

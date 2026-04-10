@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PetAdopt.Application.DTOs.Auth;
 using PetAdopt.Application.Interfaces.Services;
@@ -21,7 +22,7 @@ namespace PetAdopt.API.Controllers
         {
             try
             {
-                var result = await _authService.RegisterAsync(dto);
+                var result = await _authService.RegisterAsync(dto, Response);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -35,13 +36,22 @@ namespace PetAdopt.API.Controllers
         {
             try
             {
-                var result = await _authService.LoginAsync(dto);
+                var result = await _authService.LoginAsync(dto ,Response);
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            await _authService.LogoutAsync(Response);
+            return Ok("Logged out successfully");
         }
 
 

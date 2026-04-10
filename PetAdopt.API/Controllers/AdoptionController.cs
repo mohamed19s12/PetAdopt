@@ -35,16 +35,30 @@ namespace PetAdopt.API.Controllers
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Accept(int requestId)
         {
-            await _adoptionService.Acceept(requestId);
-            return Ok("Adoption request accepted.");
+            try
+            {
+                await _adoptionService.Acceept(requestId);
+                return Ok("Adoption request accepted.");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpPost("Reject/{requestId}")]
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Reject(int requestId)
         {
-            await _adoptionService.Reject(requestId);
-            return Ok("Adoption request rejected.");
+            try
+            {
+                await _adoptionService.Reject(requestId);
+                return Ok("Adoption request rejected.");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

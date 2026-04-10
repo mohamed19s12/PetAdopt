@@ -23,5 +23,8 @@ namespace PetAdopt.Domain.Entities
         public ApplicationUser Owner { get; set; }
 
         public PetStatus Status { get; set; } = PetStatus.Pending;
+
+        //Animal type for Searching and Filtering
+        public string? AnimalType { get; set; }
     }
 }

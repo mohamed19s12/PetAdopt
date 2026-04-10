@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PetAdopt.Application.Interfaces.Services;
@@ -8,6 +9,7 @@ namespace PetAdopt.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles ="Admin")]
     public class AdminController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -44,8 +46,15 @@ namespace PetAdopt.API.Controllers
         [HttpPost("approve-pet/{petId}")]
         public async Task<IActionResult> ApprovePet(int petId)
         {
-            await _petService.ApproveAsync(petId);
-            return Ok("Pet approved successfully");
+            try
+            {
+                await _petService.ApproveAsync(petId);
+                return Ok("Pet approved successfully");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

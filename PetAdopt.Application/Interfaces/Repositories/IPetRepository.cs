@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,16 @@ namespace PetAdopt.Application.Interfaces.Repositories
     public interface IPetRepository
     {
         Task<int> AddAsync(Pet pet);
-        Task<List<Pet>> GetAllApproovedAsync();
+        Task<List<Pet>> GetAllAsync();
         Task<Pet> GetByIdAsync(int id);
+
+        Task UpdateAsync(Pet pet);
+        Task DeleteAsync(int id);
+
         Task SaveChangesAsync();
+
+        // Filtering and Searching
+        Task<(List<Pet> Pets, int totalCount)> SearchAsync(PetFilterDto filter);
 
     }
 }

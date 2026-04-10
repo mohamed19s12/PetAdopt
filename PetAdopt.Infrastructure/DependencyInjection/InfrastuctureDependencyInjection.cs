@@ -17,6 +17,7 @@ namespace PetAdopt.Infrastructure.DependencyInjection
             //Services
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ITokenService, TokenService>();
 
 
             return services;
