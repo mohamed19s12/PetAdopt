@@ -23,5 +23,8 @@ namespace PetAdopt.Application.Interfaces.Repositories
         // Filtering and Searching
         Task<(List<Pet> Pets, int totalCount)> SearchAsync(PetFilterDto filter);
 
+        //Getiing Pending Pets For Admin Panel
+        Task<List<Pet>> GetPendingAsync();
+
     }
 }

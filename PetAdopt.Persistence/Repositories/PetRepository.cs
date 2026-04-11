@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace PetAdopt.Persistence.Repositories
 {
@@ -58,6 +59,14 @@ namespace PetAdopt.Persistence.Repositories
             return await _context.Pets
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public Task<List<Pet>> GetPendingAsync()
+        {
+            var pendingPets = _context.Pets
+                .Where(p => p.Status == PetStatus.Pending)
+                .ToListAsync();
+            return pendingPets;
         }
 
         public async Task SaveChangesAsync()
@@ -111,7 +120,7 @@ namespace PetAdopt.Persistence.Repositories
 
         public async Task UpdateAsync(Pet pet)
         {
-            _context.Pets.Update(pet);
+             _context.Pets.Update(pet);
         }
     }
 }

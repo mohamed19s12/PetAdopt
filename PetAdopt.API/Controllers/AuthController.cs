@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using PetAdopt.Application.DTOs;
 using PetAdopt.Application.DTOs.Auth;
 using PetAdopt.Application.Interfaces.Services;
 
@@ -18,31 +21,19 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("Auth-Limit")]
         public async Task<IActionResult> Register([FromForm] RegisterDto dto)
         {
-            try
-            {
-                var result = await _authService.RegisterAsync(dto, Response);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _authService.RegisterAsync(dto, Response);
+            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Registered Successfully"));
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("Auth-Limit")]
         public async Task<IActionResult> Login([FromForm] LoginDto dto)
         {
-            try
-            {
-                var result = await _authService.LoginAsync(dto ,Response);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _authService.LoginAsync(dto ,Response);
+            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Logged in Successfully"));
         }
 
 
@@ -51,7 +42,7 @@ namespace PetAdopt.API.Controllers
         public async Task<IActionResult> Logout()
         {
             await _authService.LogoutAsync(Response);
-            return Ok("Logged out successfully");
+            return Ok(ApiResponse<object>.Success("Logged out successfully"));
         }
 
 

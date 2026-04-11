@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PetAdopt.Application.DTOs;
+using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Services;
 using System.Security.Claims;
 
@@ -27,7 +29,7 @@ namespace PetAdopt.API.Controllers
                 return Unauthorized();
 
             await _favoriteService.AddToFavorites(userId, petId);
-            return Ok("Added To favorites");
+            return Ok(ApiResponse<object>.Success(null, "Added to favorites"));
         }
 
         [HttpDelete("petId")]
@@ -38,7 +40,7 @@ namespace PetAdopt.API.Controllers
             if (userId == null)
                 return Unauthorized();
             await _favoriteService.RemoveFromFavorites(userId, petId);
-            return Ok("Removed from favorites");
+            return Ok(ApiResponse<object>.Success(null, "Removed from favorites"));
         }
 
         [HttpGet]
@@ -49,7 +51,7 @@ namespace PetAdopt.API.Controllers
             if (userId == null)
                 return Unauthorized();
             var result = await _favoriteService.GetUserFavorites(userId);
-            return Ok(result);
+            return Ok(ApiResponse<List<PetDto>>.Success(result));
         }
     }
 }

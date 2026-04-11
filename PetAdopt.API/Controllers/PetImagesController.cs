@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PetAdopt.Application.DTOs;
 using PetAdopt.Application.Interfaces.Services;
 
 namespace PetAdopt.API.Controllers
@@ -27,7 +28,7 @@ namespace PetAdopt.API.Controllers
             //return Ok("Uploaded");
 
             if (files == null || !files.Any())
-                return BadRequest("No files uploaded");
+                return BadRequest(ApiResponse<object>.Fail("No files uploaded"));
 
             foreach (var file in files)
             {
@@ -38,14 +39,14 @@ namespace PetAdopt.API.Controllers
                 await _petImageService.UploadImage(petId, stream, fileName);
             }
 
-            return Ok("Uploaded");
+            return Ok(ApiResponse<object>.Success(null, "Images uploaded successfully"));
         }
 
         [HttpGet("{petId}")]
         public async Task<IActionResult> GetPetImages(int petId)
         {
             var images = await _petImageService.GetPetImages(petId);
-            return Ok(images);
+            return Ok(ApiResponse<List<string>>.Success(images));
         }
     }
 }

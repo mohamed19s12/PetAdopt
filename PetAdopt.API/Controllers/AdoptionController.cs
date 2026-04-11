@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using PetAdopt.Application.DTOs;
+using PetAdopt.Application.DTOs.Adoption;
 using PetAdopt.Application.Interfaces.Services;
+using PetAdopt.Domain.Enums;
 using System.Security.Claims;
 
 namespace PetAdopt.API.Controllers
@@ -17,7 +20,7 @@ namespace PetAdopt.API.Controllers
             _adoptionService = adoptionService;
         }
 
-        [HttpPost("{petId}")]
+        [HttpPost("request-pet-for-adoption/{petId}")]
         [Authorize(Roles = "Adopter")]
         public async Task<IActionResult> Apply(int petId)
         {
@@ -28,37 +31,33 @@ namespace PetAdopt.API.Controllers
             if (userId == null)
                 return Unauthorized();
             await _adoptionService.Apply(userId, petId);
-            return Ok("Adoption request submitted successfully.");
+            return Ok(ApiResponse<object>.Success(null, "Adoption request submitted successfully"));
         }
 
-        [HttpPost("Accept/{requestId}")]
+        [HttpPut("Accept-adoption-request/{requestId}")]
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Accept(int requestId)
         {
-            try
-            {
-                await _adoptionService.Acceept(requestId);
-                return Ok("Adoption request accepted.");
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
+            await _adoptionService.Acceept(requestId);
+            return Ok(ApiResponse<object>.Success(null, "Adoption request accepted"));
         }
 
-        [HttpPost("Reject/{requestId}")]
+        [HttpPut("Reject-adoption-request/{requestId}")]
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Reject(int requestId)
         {
-            try
-            {
-                await _adoptionService.Reject(requestId);
-                return Ok("Adoption request rejected.");
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
+            await _adoptionService.Reject(requestId);
+            return Ok(ApiResponse<object>.Success(null, "Adoption request rejected"));
+        }
+
+        [HttpGet("my-requests")]
+        [Authorize(Roles = "Adopter")]
+        public async Task<IActionResult> GetMyRequests([FromQuery] RequestStatus? status)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+            var result = await _adoptionService.GetMyRequestsAsync(userId, status);
+            return Ok(ApiResponse<List<AdoptionRequestDto>>.Success(result));
         }
     }
 }

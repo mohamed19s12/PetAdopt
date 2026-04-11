@@ -21,5 +21,10 @@ namespace PetAdopt.Application.Interfaces.Services
 
         //Applying Filters and Search
         Task<PageResultDto<PetDto>> SearchAsync(PetFilterDto filter);
+
+        //Rejecting Pets From The Admin Panel
+        Task RejectAsync(int petId);
+
+        Task<List<PetDto>> GetPendingAsync();
     }
 }

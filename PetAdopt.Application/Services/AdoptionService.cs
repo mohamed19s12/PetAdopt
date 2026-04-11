@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using PetAdopt.Application.DTOs.Adoption;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
 using PetAdopt.Domain.Entities;
@@ -50,6 +52,17 @@ namespace PetAdopt.Application.Services
 
         public async Task Apply(string userId, int petId)
         {
+            //First we need to get the pet by id
+            var pet = await _PetRepo.GetByIdAsync(petId);
+            if (pet == null)
+                throw new KeyNotFoundException("Pet not found");
+
+            //Check if the pet is available for adoption
+            if (pet.Status != PetStatus.Approved)
+                throw new InvalidOperationException("Pet is not available for adoption");
+
+
+
             var request = new AdoptionRequest
             {
                 PetId = petId,
@@ -71,6 +84,19 @@ namespace PetAdopt.Application.Services
             request.Status = RequestStatus.Rejected;
 
             await _AdoptionRepo.SaveChangesAsync();
+        }
+
+        public async Task<List<AdoptionRequestDto>> GetMyRequestsAsync(string adopterId, RequestStatus? status = null)
+        {
+            var requests = await _AdoptionRepo.GetByAdopterIdAsync(adopterId, status);
+            return requests.Select(r => new AdoptionRequestDto
+            {
+                Id = r.Id,
+                PetId = r.PetId,
+                PetName = r.Pet.Name,
+                Status = r.Status.ToString(),
+                RequestedAt = r.RequestedAt
+            }).ToList();
         }
     }
 }

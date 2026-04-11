@@ -155,5 +155,35 @@ namespace PetAdopt.Application.Services
                 PageSize = filter.PageSize
             };
         }
+
+        public async Task RejectAsync(int petId)
+        {
+            var pet = await _petRepository.GetByIdAsync(petId);
+            if (pet == null) 
+            {
+                throw new Exception("Pet not found");
+            }
+
+            //if pet has rejected status then not change
+            if (pet.Status == PetStatus.Rejected)
+                throw new Exception("Pet is already rejected");
+
+            pet.Status = PetStatus.Rejected;
+            await _petRepository.SaveChangesAsync();
+        }
+
+        public async Task<List<PetDto>> GetPendingAsync()
+        {
+            var pendingPets = await _petRepository.GetPendingAsync();
+            return pendingPets.Select(p => new PetDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Breed = p.Breed,
+                Location = p.Location,
+                Status = p.Status.ToString()
+            }).ToList();
+
+        }
     }
 }

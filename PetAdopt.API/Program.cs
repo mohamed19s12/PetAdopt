@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PetAdopt.API.Middlewares.PetAdopt.API.Middlewares;
 using PetAdopt.Application.DependencyInjection;
 using PetAdopt.Infrastructure.DependencyInjection;
-using PetAdopt.Infrastructure.Hubs;
 using PetAdopt.Infrastructure.Hubs;
 using PetAdopt.Persistence;
 using PetAdopt.Persistence.DependencyInjection;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -92,6 +94,40 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+//Rates Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Global Limiter => 100 request per min for each user
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User?.Identity?.Name ?? context.Request.Headers.Host.ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100,        // 100 request
+                Window = TimeSpan.FromMinutes(1)  
+            }));
+
+    // Auth policy => 5 request per 15 min for each user
+    options.AddFixedWindowLimiter("Auth-Limit", opt =>
+    {
+        opt.PermitLimit = 5;             // 5 requests
+        opt.Window = TimeSpan.FromMinutes(15);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst; // Process requests in the order they were received
+        opt.QueueLimit = 0; // NO wait
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsync(
+            "Too many requests. Please try again later.", token);
+    };
+});
+
 var app = builder.Build();
 
 // Middleware
@@ -100,6 +136,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseRateLimiter();
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 

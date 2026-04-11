@@ -1,4 +1,5 @@
 ﻿using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,8 @@ namespace PetAdopt.Application.Interfaces.Repositories
 
         //Getting all adoption requests for a specific pet by its ID
         Task<AdoptionRequest> GetByIdAsync(int id);
+
+        Task<List<AdoptionRequest>> GetByAdopterIdAsync(string AdopterId , RequestStatus? status = null);
 
         //Saving changes to the database
         Task SaveChangesAsync();

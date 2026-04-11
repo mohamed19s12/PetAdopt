@@ -15,6 +15,9 @@ namespace PetAdopt.Domain.Entities
         public string TargetUserId { get; set; }
         public ApplicationUser TargetUser { get; set; }
 
+        public int PetId { get; set; }
+        public Pet Pet { get; set; }
+
         public int Rating { get; set; }
         public string Comment { get; set; }
     }

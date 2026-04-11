@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PetAdopt.Application.DTOs.Adoption;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 using PetAdopt.Persistence.Context;
 using System;
 using System.Collections.Generic;
@@ -42,6 +44,19 @@ namespace PetAdopt.Persistence.Repositories
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<AdoptionRequest>> GetByAdopterIdAsync(string AdopterId , RequestStatus? status = null)
+        {
+            var query = _context.AdoptionRequests
+                .Include(a => a.Pet)
+                .Where(a => a.AdoprerId == AdopterId)
+                .AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(a => a.Status == status.Value);
+
+            return await query.ToListAsync();
         }
     }
 }
