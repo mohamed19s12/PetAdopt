@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+</head>
+<body>
+    <h2>SignalR Test</h2>
+
+    <input id="token" placeholder="Paste JWT Token" style="width:600px" />
+    <br /><br />
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+    <br /><br />
+    <div id="status" style="color:blue">Not connected</div>
+    <br />
+    <div id="messages"></div>
+
+    <script>
+        let connection = null;
+
+        async function connect() {
+            const token = document.getElementById("token").value.trim();
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/notifications", {
+                    accessTokenFactory: () => token
+                })
+                .withAutomaticReconnect()
+                .configureLogging(signalR.LogLevel.Debug)
+                .build();
+
+            connection.on("ReceiveNotification", (message) => {
+                addMessage("🔔 " + message, "green");
+            });
+
+            connection.onclose(() => {
+                document.getElementById("status").innerText = "❌ Disconnected";
+                document.getElementById("status").style.color = "red";
+            });
+
+            try {
+                await connection.start();
+                document.getElementById("status").innerText = "✅ Connected! ConnectionId: " + connection.connectionId;
+                document.getElementById("status").style.color = "green";
+            } catch (err) {
+                addMessage("❌ Error: " + err, "red");
+            }
+        }
+
+        async function disconnect() {
+            if (connection) {
+                await connection.stop();
+            }
+        }
+
+        function addMessage(msg, color) {
+            const div = document.createElement("div");
+            div.style.color = color;
+            div.innerHTML = new Date().toLocaleTimeString() + " - " + msg;
+            document.getElementById("messages").prepend(div);
+        }
+    </script>
+</body>
+</html>

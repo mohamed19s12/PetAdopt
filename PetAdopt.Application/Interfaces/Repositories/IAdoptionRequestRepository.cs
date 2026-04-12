@@ -23,5 +23,8 @@ namespace PetAdopt.Application.Interfaces.Repositories
 
         //Saving changes to the database
         Task SaveChangesAsync();
+
+        //delete request if it rejected from the owner 
+        Task DeleteAsync(AdoptionRequest request);
     }
 }

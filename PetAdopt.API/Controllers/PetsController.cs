@@ -27,7 +27,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<List<PetDto>>.Success(pets));
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("details/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var pet = await _petService.GetByIdAsync(id);
@@ -73,6 +73,16 @@ namespace PetAdopt.API.Controllers
         {
             var pets = await _petService.SearchAsync(filter);
             return Ok(ApiResponse<PageResultDto<PetDto>>.Success(pets));
+        }
+
+        [HttpGet("owner/my-pets")]
+        [Authorize(Roles = "Owner")]
+        public async Task<IActionResult> GetMyPets()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+            var result = await _petService.GetMyPetsAsync(userId);
+            return Ok(ApiResponse<List<PetDto>>.Success(result));
         }
     }
 }

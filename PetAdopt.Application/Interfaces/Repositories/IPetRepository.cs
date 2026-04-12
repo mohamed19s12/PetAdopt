@@ -26,5 +26,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
         //Getiing Pending Pets For Admin Panel
         Task<List<Pet>> GetPendingAsync();
 
+        //Get Owner pets for each user
+        Task<List<Pet>> GetByOwnerIdAsync(string ownerId);
     }
 }

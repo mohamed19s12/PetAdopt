@@ -122,5 +122,12 @@ namespace PetAdopt.Persistence.Repositories
         {
              _context.Pets.Update(pet);
         }
+
+        public async Task<List<Pet>> GetByOwnerIdAsync(string ownerId)
+        {
+            return await _context.Pets
+                .Where(p => p.OwnerId == ownerId)
+                .ToListAsync();
+        }
     }
 }

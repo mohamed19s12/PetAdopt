@@ -14,10 +14,12 @@ namespace PetAdopt.Application.Services
     public class PetService : IPetService
     {
         private readonly IPetRepository _petRepository;
+        private readonly INotificationService _notificationService;
 
-        public PetService(IPetRepository petRepository)
+        public PetService(IPetRepository petRepository, INotificationService notificationService)
         {
             _petRepository = petRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<int> CreateAsync(CreatePetDto dto, string userId)
@@ -54,6 +56,10 @@ namespace PetAdopt.Application.Services
 
             pet.Status = PetStatus.Approved;
             await _petRepository.SaveChangesAsync();
+
+            //Notify
+            await _notificationService.SendNotificationAsync(
+                pet.OwnerId, $" Your pet {pet.Name} has been approved and is now visible!");
         }
 
 
@@ -170,6 +176,10 @@ namespace PetAdopt.Application.Services
 
             pet.Status = PetStatus.Rejected;
             await _petRepository.SaveChangesAsync();
+
+            //Notify
+            await _notificationService.SendNotificationAsync(
+                pet.OwnerId, $" Your pet {pet.Name} has been rejected");
         }
 
         public async Task<List<PetDto>> GetPendingAsync()
@@ -184,6 +194,19 @@ namespace PetAdopt.Application.Services
                 Status = p.Status.ToString()
             }).ToList();
 
+        }
+
+        public async Task<List<PetDto>> GetMyPetsAsync(string ownerId)
+        {
+            var pets = await _petRepository.GetByOwnerIdAsync(ownerId);
+            return pets.Select(p => new PetDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Breed = p.Breed,
+                Location = p.Location,
+                Status = p.Status.ToString()
+            }).ToList();
         }
     }
 }

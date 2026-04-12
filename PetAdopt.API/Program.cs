@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PetAdopt.API.Middlewares.PetAdopt.API.Middlewares;
@@ -27,33 +28,12 @@ builder.Services.AddControllers()
         });
 builder.Services.AddEndpointsApiExplorer();
 
+// SignalR UserIdProvider
+builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 //SignalR
 builder.Services.AddSignalR();
 
 builder.Services.AddSwaggerGen();
-//builder.Services.AddSwaggerGen(c =>
-//{
-//    c.AddSecurityDefinition("cookieAuth", new OpenApiSecurityScheme
-//    {
-//        Type = SecuritySchemeType.ApiKey,
-//        In = ParameterLocation.Cookie,
-//        Name = "jwt"
-//    });
-//    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-//    {
-//        {
-//            new OpenApiSecurityScheme
-//            {
-//                Reference = new OpenApiReference
-//                {
-//                    Type = ReferenceType.SecurityScheme,
-//                    Id = "cookieAuth"
-//                }
-//            },
-//            Array.Empty<string>()
-//        }
-//    });
-//});
 
 //JWT Authentication
 builder.Services.AddAuthentication(options =>
@@ -82,11 +62,23 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var token = context.Request.Cookies["jwt"];
-            if (!string.IsNullOrEmpty(token))
+            // Check if the request is for the SignalR hub
+            var accessToken = context.Request.Query["access_token"];
+            // read from the cookie
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken))
             {
-                context.Token = token;
+                context.Token = accessToken;
             }
+            else
+            {
+                // Read token from cookie
+                var token = context.HttpContext.Request.Cookies["jwt"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+            }   
             return Task.CompletedTask;
         }
     };
@@ -114,7 +106,7 @@ builder.Services.AddRateLimiter(options =>
     // Auth policy => 5 request per 15 min for each user
     options.AddFixedWindowLimiter("Auth-Limit", opt =>
     {
-        opt.PermitLimit = 5;             // 5 requests
+        opt.PermitLimit = 50;             // 5 requests
         opt.Window = TimeSpan.FromMinutes(15);
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst; // Process requests in the order they were received
         opt.QueueLimit = 0; // NO wait
@@ -127,6 +119,7 @@ builder.Services.AddRateLimiter(options =>
             "Too many requests. Please try again later.", token);
     };
 });
+
 
 var app = builder.Build();
 
@@ -143,12 +136,13 @@ app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
 // SignalR Hub Mapping
-app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.UseStaticFiles();
 
 app.UseAuthentication(); 
 app.UseAuthorization();
+
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.MapControllers();
 

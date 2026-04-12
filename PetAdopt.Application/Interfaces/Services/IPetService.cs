@@ -26,5 +26,8 @@ namespace PetAdopt.Application.Interfaces.Services
         Task RejectAsync(int petId);
 
         Task<List<PetDto>> GetPendingAsync();
+
+        //Get my pets (owner)
+        Task<List<PetDto>> GetMyPetsAsync(string ownerId);
     }
 }

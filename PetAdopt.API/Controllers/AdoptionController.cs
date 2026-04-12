@@ -59,5 +59,15 @@ namespace PetAdopt.API.Controllers
             var result = await _adoptionService.GetMyRequestsAsync(userId, status);
             return Ok(ApiResponse<List<AdoptionRequestDto>>.Success(result));
         }
+
+        [HttpGet("owner-requests")]
+        [Authorize(Roles = "Owner")]
+        public async Task<IActionResult> GetOwnerRequests()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+            var result = await _adoptionService.GetOwnerRequestsAsync(userId);
+            return Ok(ApiResponse<List<AdoptionRequestDto>>.Success(result));
+        }
     }
 }

@@ -58,5 +58,11 @@ namespace PetAdopt.Persistence.Repositories
 
             return await query.ToListAsync();
         }
+
+        public Task DeleteAsync(AdoptionRequest request)
+        {
+            _context.AdoptionRequests.Remove(request);
+            return Task.CompletedTask;
+        }
     }
 }

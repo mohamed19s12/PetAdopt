@@ -34,19 +34,23 @@ namespace PetAdopt.Application.Services
             if (request == null)
                 throw new Exception("Adoption request not found");
 
+            //if the request approved cannot accept again
+            if (request.Status == RequestStatus.Approved)
+                throw new InvalidOperationException("Adoption request is already approved");
+
+            if (request.Status == RequestStatus.Rejected)
+                throw new InvalidOperationException("Cannot accept a rejected request, adopter must apply again");
+
+
             //make Rquest Approved
             request.Status = RequestStatus.Approved;
-
             //then make the pet adopted
             request.Pet.Status = PetStatus.Adopted;
-
-
             await _AdoptionRepo.SaveChangesAsync();
 
 
             //Notify the adopter about the approval
-            await _NotificationService
-                .SendNotificationAsync(
+            await _NotificationService.SendNotificationAsync(
                 request.AdoprerId, $"Your adoption request for {request.Pet.Name} has been approved!");
         }
 
@@ -72,6 +76,10 @@ namespace PetAdopt.Application.Services
             await _AdoptionRepo.AddAsync(request);
             await _AdoptionRepo.SaveChangesAsync();
 
+            await _NotificationService.SendNotificationAsync(
+                pet.OwnerId,
+                $"Someone wants to adopt your pet {pet.Name}!");
+
         }
 
         public async Task Reject(int requestId)
@@ -81,14 +89,33 @@ namespace PetAdopt.Application.Services
             if (request == null)
                 throw new Exception("Adoption request not found");
 
-            request.Status = RequestStatus.Rejected;
+            if (request.Status == RequestStatus.Approved)
+                throw new InvalidOperationException("Cannot reject an already approved request");
 
+            await _AdoptionRepo.DeleteAsync(request);
             await _AdoptionRepo.SaveChangesAsync();
+
+            await _NotificationService.SendNotificationAsync(
+                request.AdoprerId,
+                $"Your adoption request for {request.Pet.Name} has been rejected.");
         }
 
         public async Task<List<AdoptionRequestDto>> GetMyRequestsAsync(string adopterId, RequestStatus? status = null)
         {
             var requests = await _AdoptionRepo.GetByAdopterIdAsync(adopterId, status);
+            return requests.Select(r => new AdoptionRequestDto
+            {
+                Id = r.Id,
+                PetId = r.PetId,
+                PetName = r.Pet.Name,
+                Status = r.Status.ToString(),
+                RequestedAt = r.RequestedAt
+            }).ToList();
+        }
+
+        public async Task<List<AdoptionRequestDto>> GetOwnerRequestsAsync(string ownerId)
+        {
+            var requests = await _AdoptionRepo.GetByOwnerIdAsync(ownerId);
             return requests.Select(r => new AdoptionRequestDto
             {
                 Id = r.Id,
