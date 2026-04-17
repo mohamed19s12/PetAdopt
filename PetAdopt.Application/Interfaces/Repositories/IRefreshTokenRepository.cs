@@ -11,6 +11,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
     {
         Task AddAsync(RefreshToken refreshToken);
         Task<RefreshToken> GetByTokenAsync(string token);
+        Task<List<RefreshToken>> GetByUserIdAsync(string userId);
         Task SaveChangesAsync();
     }
 }

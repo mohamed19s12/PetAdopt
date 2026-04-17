@@ -12,6 +12,7 @@ namespace PetAdopt.Application.Interfaces.Services
     {
         Task<AuthResponseDto> RegisterAsync(RegisterDto dto, HttpResponse response);
         Task<AuthResponseDto> LoginAsync(LoginDto loginDto, HttpResponse response);
-        Task LogoutAsync(HttpResponse response);
+        Task<AuthResponseDto> RefreshTokenAsync(HttpRequest request, HttpResponse response);
+        Task LogoutAsync(HttpRequest request, HttpResponse response, string userId);
     }
 }

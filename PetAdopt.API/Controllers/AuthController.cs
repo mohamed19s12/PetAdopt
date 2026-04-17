@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using PetAdopt.Application.DTOs;
 using PetAdopt.Application.DTOs.Auth;
 using PetAdopt.Application.Interfaces.Services;
+using System.Security.Claims;
 
 namespace PetAdopt.API.Controllers
 {
@@ -25,7 +24,7 @@ namespace PetAdopt.API.Controllers
         public async Task<IActionResult> Register([FromForm] RegisterDto dto)
         {
             var result = await _authService.RegisterAsync(dto, Response);
-            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Registered Successfully"));
+            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Registered Successfully , please wait admin to aprove your account!"));
         }
 
         [HttpPost("login")]
@@ -36,12 +35,20 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<AuthResponseDto>.Success(result, "Logged in Successfully"));
         }
 
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            var result = await _authService.RefreshTokenAsync(Request, Response);
+            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Token refreshed successfully"));
+        }
+
 
         [HttpPost("logout")]
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            await _authService.LogoutAsync(Response);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _authService.LogoutAsync(Request, Response, userId!);
             return Ok(ApiResponse<object>.Success("Logged out successfully"));
         }
 

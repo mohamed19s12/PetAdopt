@@ -1,14 +1,17 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PetAdopt.API.Middlewares.PetAdopt.API.Middlewares;
 using PetAdopt.Application.DependencyInjection;
+using PetAdopt.Domain.Entities;
 using PetAdopt.Infrastructure.DependencyInjection;
 using PetAdopt.Infrastructure.Hubs;
 using PetAdopt.Persistence;
 using PetAdopt.Persistence.DependencyInjection;
+using PetAdopt.Persistence.Seeders;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -145,5 +148,16 @@ app.UseAuthorization();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.MapControllers();
+
+// Admin Seeding
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider
+                        .GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider
+                        .GetRequiredService<RoleManager<IdentityRole>>();
+
+    await AdminSeeder.SeedAsync(userManager, roleManager);
+}
 
 app.Run();

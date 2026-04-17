@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -44,7 +45,7 @@ namespace PetAdopt.Infrastructure.Services
                 issuer: _config["JWT:Issuer"],
                 audience: _config["JWT:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
+                expires: DateTime.UtcNow.AddMinutes(_config.GetValue<int?>("JWT:DurationInMinutes") ?? 15),
                 signingCredentials: creds
             );
 
@@ -53,7 +54,7 @@ namespace PetAdopt.Infrastructure.Services
 
         public Task<string> CreateRefreshToken()
         {
-            var result = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            var result = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(64));
             return Task.FromResult(result);
         }
     }

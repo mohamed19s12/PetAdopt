@@ -11,6 +11,7 @@ namespace PetAdopt.Domain.Entities
     {
         public int PetId { get; set; }
         public Pet Pet { get; set; }    
+
         public string ImageUrl { get; set; }
     }
 }

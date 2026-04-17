@@ -2,10 +2,8 @@
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Domain.Entities;
 using PetAdopt.Persistence.Context;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace PetAdopt.Persistence.Repositories
@@ -27,6 +25,14 @@ namespace PetAdopt.Persistence.Repositories
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(r => r.Token == token);
         }
+
+        public async Task<List<RefreshToken>> GetByUserIdAsync(string userId)
+        {
+            return await _context.RefreshTokens
+                .Where(r => r.UserId == userId)
+                .ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

@@ -28,9 +28,7 @@ namespace PetAdopt.Application.Validators
                 .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain special character");
 
             RuleFor(x => x.Role)
-                .NotEmpty().WithMessage("Role is required")
-                .Must(r => r == "Owner" || r == "Adopter")
-                .WithMessage("Role must be Owner or Adopter");
+                .IsInEnum().WithMessage("Role must be either Owner or Adopter");
         }
     }
     

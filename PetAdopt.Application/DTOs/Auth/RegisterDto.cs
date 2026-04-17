@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PetAdopt.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,7 @@ namespace PetAdopt.Application.DTOs.Auth
         public string Password { get; set; }
 
         //role
-        public string Role { get; set; }
+        public UserRole Role { get; set; }
     }
 
 }
