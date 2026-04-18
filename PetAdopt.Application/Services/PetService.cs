@@ -1,4 +1,5 @@
-﻿using PetAdopt.Application.DTOs.Pet;
+﻿using Microsoft.Extensions.Logging;
+using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
 using PetAdopt.Domain.Entities;
@@ -15,15 +16,18 @@ namespace PetAdopt.Application.Services
     {
         private readonly IPetRepository _petRepository;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<PetService> _logger;
 
-        public PetService(IPetRepository petRepository, INotificationService notificationService)
+        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger)
         {
             _petRepository = petRepository;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<int> CreateAsync(CreatePetDto dto, string userId)
         {
+            _logger.LogInformation("Creating pet: {PetName} for Owner: {UserId}", dto.Name, userId);
             //Mapping CreatePetDto to Pet Entity
             var pet = new Pet
             {
@@ -41,21 +45,30 @@ namespace PetAdopt.Application.Services
             await _petRepository.AddAsync(pet);
             await _petRepository.SaveChangesAsync();
 
+            _logger.LogInformation("Pet created: {PetName} with Id: {PetId}", pet.Name, pet.Id);
+
             return pet.Id;
         }
 
         public async Task ApproveAsync(int petId)
         {
+            _logger.LogInformation("Approving pet: {PetId}", petId);
             var pet = await _petRepository.GetByIdAsync(petId);
             if (pet == null)
+            {
+                _logger.LogWarning("Pet not found: {PetId}", petId);
                 throw new Exception("Pet not found");
-
+            }
             //if pet has approved status then not change
             if (pet.Status == PetStatus.Approved)
+            {
+                _logger.LogWarning("Pet already approved: {PetId}", petId);
                 throw new Exception("Pet is already approved");
-
+            }
             pet.Status = PetStatus.Approved;
             await _petRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Pet approved: {PetName}", pet.Name);
 
             //Notify
             await _notificationService.SendNotificationAsync(
@@ -65,7 +78,9 @@ namespace PetAdopt.Application.Services
 
         public async Task<List<PetDto>> GetAllAsync()
         {
+            _logger.LogInformation("Retrieving all pets");
             var pets = await _petRepository.GetAllAsync();
+            _logger.LogInformation("Found {PetCount} pets", pets.Count);
             return  pets.Select(p => new PetDto
             {
                 Id = p.Id,
@@ -79,10 +94,14 @@ namespace PetAdopt.Application.Services
 
         public async Task<PetDto> GetByIdAsync(int petId)
         {
+            _logger.LogInformation("Retrieving pet by Id: {PetId}", petId);
             var pet = await _petRepository.GetByIdAsync(petId);
 
             if (pet == null)
+            {
+                _logger.LogWarning("Pet not found: {PetId}", petId);
                 throw new Exception("Pet not found");
+            }
 
             return new PetDto
             {
@@ -96,16 +115,19 @@ namespace PetAdopt.Application.Services
 
         public async Task UpdateAsync(int petId, UpdatePetDto dto, string userId)
         {
+            _logger.LogInformation("Updating pet: {PetId} by User: {UserId}", petId, userId);
             var pet = await _petRepository.GetByIdAsync(petId);
 
             if (pet == null)
             {
+                _logger.LogWarning("Pet not found: {PetId}", petId);
                 throw new Exception("Pet Not Found");
             }
 
             // Check if the user is the owner of the pet
             if (pet.OwnerId != userId)
             {
+                _logger.LogWarning("User {UserId} is not the owner of pet: {PetId}", userId, petId);
                 throw new Exception("You Not Own This Pet!");
             }
 
@@ -120,31 +142,36 @@ namespace PetAdopt.Application.Services
 
             await _petRepository.UpdateAsync(pet);
             await _petRepository.SaveChangesAsync();
+            _logger.LogInformation("Pet updated: {PetName} (Id: {PetId})", pet.Name, pet.Id);
 
         }
 
         public async Task DeleteAsync(int petId, string userId)
         {
-            
+            _logger.LogInformation("Deleting pet: {PetId} by User: {UserId}", petId, userId);
             var pet = await _petRepository.GetByIdAsync(petId);
             if (pet == null)
             {
+                _logger.LogWarning("Pet not found: {PetId}", petId);
                 throw new Exception("Pet Not Found");
             }
             // Check if the user is the owner of the pet
             if (pet.OwnerId != userId)
             {
+                _logger.LogWarning("User {UserId} is not the owner of pet: {PetId}", userId, petId);
                 throw new Exception("You Not Own This Pet!");
             }
             await _petRepository.DeleteAsync(petId);
             await _petRepository.SaveChangesAsync();
+            _logger.LogInformation("Pet deleted: {PetName} (Id: {PetId})", pet.Name, pet.Id);
         }
 
         public async Task<PageResultDto<PetDto>> SearchAsync(PetFilterDto filter)
         {
+            _logger.LogInformation("Searching pets with filter: {@Filter}", filter);
             var (pets, totalCount) = await _petRepository.SearchAsync(filter);
 
-
+            _logger.LogInformation("Found {PetCount} pets", totalCount);
             return new PageResultDto<PetDto>
             {
                 Items = pets.Select(p => new PetDto
@@ -164,18 +191,24 @@ namespace PetAdopt.Application.Services
 
         public async Task RejectAsync(int petId)
         {
+            _logger.LogInformation("Rejecting pet: {PetId}", petId);
             var pet = await _petRepository.GetByIdAsync(petId);
             if (pet == null) 
             {
+                _logger.LogWarning("Pet not found: {PetId}", petId);
                 throw new Exception("Pet not found");
             }
 
             //if pet has rejected status then not change
             if (pet.Status == PetStatus.Rejected)
+            {
+                _logger.LogWarning("Pet already rejected: {PetId}", petId);
                 throw new Exception("Pet is already rejected");
-
+            }
             pet.Status = PetStatus.Rejected;
             await _petRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Pet rejected: {PetName}", pet.Name);
 
             //Notify
             await _notificationService.SendNotificationAsync(
@@ -184,7 +217,9 @@ namespace PetAdopt.Application.Services
 
         public async Task<List<PetDto>> GetPendingAsync()
         {
+            _logger.LogInformation("Retrieving pending pets for admin panel");
             var pendingPets = await _petRepository.GetPendingAsync();
+            _logger.LogInformation("Found {PetCount} pending pets", pendingPets.Count);
             return pendingPets.Select(p => new PetDto
             {
                 Id = p.Id,
@@ -198,7 +233,9 @@ namespace PetAdopt.Application.Services
 
         public async Task<List<PetDto>> GetMyPetsAsync(string ownerId)
         {
+            _logger.LogInformation("Retrieving pets for owner: {OwnerId}", ownerId);
             var pets = await _petRepository.GetByOwnerIdAsync(ownerId);
+            _logger.LogInformation("Found {PetCount} pets for owner: {OwnerId}", pets.Count, ownerId);
             return pets.Select(p => new PetDto
             {
                 Id = p.Id,
