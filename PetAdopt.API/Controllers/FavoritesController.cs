@@ -20,7 +20,7 @@ namespace PetAdopt.API.Controllers
             _favoriteService = favoriteService;
         }
 
-        [HttpPost("petId")]
+        [HttpPost("add-to-favorite/{petId}")]
         public async Task<IActionResult> Add(int petId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -32,7 +32,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "Added to favorites"));
         }
 
-        [HttpDelete("petId")]
+        [HttpDelete("{petId}")]
         public async Task<IActionResult> Remove(int petId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

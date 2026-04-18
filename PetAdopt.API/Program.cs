@@ -64,6 +64,13 @@ builder.Services.AddControllers()
         });
 builder.Services.AddEndpointsApiExplorer();
 
+//Redis Cache
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    options.InstanceName = "PetAdopt_";
+});
+
 // SignalR UserIdProvider
 builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 //SignalR

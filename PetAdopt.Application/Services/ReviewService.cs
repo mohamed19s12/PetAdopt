@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using PetAdopt.Application.DTOs.Review;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Services
@@ -15,11 +17,13 @@ namespace PetAdopt.Application.Services
     {
         private readonly IReviewRepository _reviewRepository;
         private readonly ILogger<ReviewService> _logger;
+        private readonly IDistributedCache _cache;
 
-        public ReviewService(IReviewRepository reviewRepository, ILogger<ReviewService> logger)
+        public ReviewService(IReviewRepository reviewRepository, ILogger<ReviewService> logger, IDistributedCache cache)
         {
             _reviewRepository = reviewRepository;
             _logger = logger;
+            _cache = cache;
         }
 
         public async Task AddReviewAsync(string reviewerId, CreateReviewDto reviewDto)
@@ -56,6 +60,8 @@ namespace PetAdopt.Application.Services
 
             await _reviewRepository.AddAsync(review);
             await _reviewRepository.SaveChangesAsync();
+
+            await _cache.RemoveAsync($"reviews_{reviewDto.TargetUserId}");
             _logger.LogInformation(
                 "Review added by User {ReviewerId} for Pet: {PetId}",
                 reviewerId, reviewDto.PetId);
@@ -63,15 +69,34 @@ namespace PetAdopt.Application.Services
 
         public async Task<List<ReviewDto>> GetReviewsAsync(string targetUserId)
         {
+            var cacheKey = $"reviews_{targetUserId}";
+
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+            if (cachedData != null)
+            {
+                _logger.LogInformation("Returning reviews for User {UserId} from Redis", targetUserId);
+                return JsonSerializer.Deserialize<List<ReviewDto>>(cachedData);
+            }
+
             _logger.LogInformation("Getting reviews for TargetUserId: {TargetUserId}", targetUserId);
             var reviews = await _reviewRepository.GetByTargetUserIdAsync(targetUserId);
-            return reviews.Select(r => new ReviewDto
+            var result = reviews.Select(r => new ReviewDto
             {
                 Id = r.Id,
                 ReviewerName = r.Reviewer.FullName,
                 Rating = r.Rating,
                 Comment = r.Comment
             }).ToList();
+
+            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            });
+
+            return result;
         }
+
+
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Services
@@ -17,12 +19,17 @@ namespace PetAdopt.Application.Services
         private readonly IPetRepository _petRepository;
         private readonly INotificationService _notificationService;
         private readonly ILogger<PetService> _logger;
+        private readonly IDistributedCache _cache;
 
-        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger)
+
+        private const string PetsCacheKey = "all_pets";
+
+        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger, IDistributedCache cache)
         {
             _petRepository = petRepository;
             _notificationService = notificationService;
             _logger = logger;
+            _cache = cache;
         }
 
         public async Task<int> CreateAsync(CreatePetDto dto, string userId)
@@ -47,6 +54,7 @@ namespace PetAdopt.Application.Services
 
             _logger.LogInformation("Pet created: {PetName} with Id: {PetId}", pet.Name, pet.Id);
 
+            await InvalidateCacheAsync();
             return pet.Id;
         }
 
@@ -73,15 +81,24 @@ namespace PetAdopt.Application.Services
             //Notify
             await _notificationService.SendNotificationAsync(
                 pet.OwnerId, $" Your pet {pet.Name} has been approved and is now visible!");
-        }
 
+            await InvalidateCacheAsync(petId);
+        }
 
         public async Task<List<PetDto>> GetAllAsync()
         {
+            //Get Data from Cache if exixts
+            var cachedData = await _cache.GetStringAsync(PetsCacheKey);
+            if (cachedData != null)
+            {
+                _logger.LogInformation("Returning pets from Redis cache");
+                return JsonSerializer.Deserialize<List<PetDto>>(cachedData);
+            }
+
             _logger.LogInformation("Retrieving all pets");
             var pets = await _petRepository.GetAllAsync();
-            _logger.LogInformation("Found {PetCount} pets", pets.Count);
-            return  pets.Select(p => new PetDto
+
+            var result = pets.Select(p => new PetDto
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -90,10 +107,28 @@ namespace PetAdopt.Application.Services
                 Status = p.Status.ToString()
 
             }).ToList();
+
+            //Store Data in Cache for 5 minutes
+            await _cache.SetStringAsync(PetsCacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            });
+
+            _logger.LogInformation("Pets cached in Redis for 5 minutes");
+            return result;
         }
 
         public async Task<PetDto> GetByIdAsync(int petId)
         {
+            var cacheKey = $"pet_{petId}";
+
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+            if (cachedData != null)
+            {
+                _logger.LogInformation("Returning pet {PetId} from Redis cache", petId);
+                return JsonSerializer.Deserialize<PetDto>(cachedData);
+            }
+
             _logger.LogInformation("Retrieving pet by Id: {PetId}", petId);
             var pet = await _petRepository.GetByIdAsync(petId);
 
@@ -103,7 +138,7 @@ namespace PetAdopt.Application.Services
                 throw new Exception("Pet not found");
             }
 
-            return new PetDto
+            var result =  new PetDto
             {
                 Id = pet.Id,
                 Name = pet.Name,
@@ -111,6 +146,12 @@ namespace PetAdopt.Application.Services
                 Location = pet.Location,
                 Status = pet.Status.ToString()
             };
+
+            await _cache.SetStringAsync(cacheKey , JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            });
+            return result;
         }
 
         public async Task UpdateAsync(int petId, UpdatePetDto dto, string userId)
@@ -144,6 +185,8 @@ namespace PetAdopt.Application.Services
             await _petRepository.SaveChangesAsync();
             _logger.LogInformation("Pet updated: {PetName} (Id: {PetId})", pet.Name, pet.Id);
 
+            await InvalidateCacheAsync(petId);
+
         }
 
         public async Task DeleteAsync(int petId, string userId)
@@ -164,6 +207,8 @@ namespace PetAdopt.Application.Services
             await _petRepository.DeleteAsync(petId);
             await _petRepository.SaveChangesAsync();
             _logger.LogInformation("Pet deleted: {PetName} (Id: {PetId})", pet.Name, pet.Id);
+
+            await InvalidateCacheAsync(petId);
         }
 
         public async Task<PageResultDto<PetDto>> SearchAsync(PetFilterDto filter)
@@ -213,6 +258,8 @@ namespace PetAdopt.Application.Services
             //Notify
             await _notificationService.SendNotificationAsync(
                 pet.OwnerId, $" Your pet {pet.Name} has been rejected");
+
+            await InvalidateCacheAsync(petId);
         }
 
         public async Task<List<PetDto>> GetPendingAsync()
@@ -244,6 +291,18 @@ namespace PetAdopt.Application.Services
                 Location = p.Location,
                 Status = p.Status.ToString()
             }).ToList();
+        }
+
+
+        // Invalidate Cache After Create, Update, Delete, Approve, Reject
+        private async Task InvalidateCacheAsync(int? petId = null)
+        {
+            await _cache.RemoveAsync(PetsCacheKey);
+
+            if (petId.HasValue)
+                await _cache.RemoveAsync($"pet_{petId}");
+
+            _logger.LogInformation("Redis cache invalidated");
         }
     }
 }
