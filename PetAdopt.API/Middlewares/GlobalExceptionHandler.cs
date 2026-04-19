@@ -21,8 +21,6 @@ namespace PetAdopt.API.Middlewares
                 Exception exception,
                 CancellationToken cancellationToken)
         {
-            _logger.LogError(exception,"Unhandled Exception: {Message} | Path: {Path}",
-                exception.Message, context.Request.Path);
 
             var statusCode = exception switch
             {

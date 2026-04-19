@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -23,6 +24,8 @@ namespace PetAdopt.Infrastructure.Services
         private readonly ITokenService _tokenService;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly ILogger<AuthService> _logger;
+        private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -30,7 +33,8 @@ namespace PetAdopt.Infrastructure.Services
             RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
             IRefreshTokenRepository refreshTokenRepository,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IEmailService emailService)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -38,6 +42,7 @@ namespace PetAdopt.Infrastructure.Services
             _tokenService = tokenService;
             _refreshTokenRepository = refreshTokenRepository;
             _logger = logger;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto, HttpResponse response)
@@ -49,6 +54,7 @@ namespace PetAdopt.Infrastructure.Services
                 FullName = dto.FullName,
                 IsApproved = false
             };
+
             _logger.LogInformation("Registering new user: {Email}", dto.Email);
             //create user
             var result = await _userManager.CreateAsync(user, dto.Password);
@@ -66,8 +72,21 @@ namespace PetAdopt.Infrastructure.Services
                 await _roleManager.CreateAsync(new IdentityRole(roleName));
             }
             await _userManager.AddToRoleAsync(user, roleName);
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = $"https://localhost:7249/api/Auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            await _emailService.SendConfirmationEmailAsync(user.Email, confirmationLink);
+
+            _logger.LogInformation("Confirmation email sent to {Email}", user.Email);
+
+
             _logger.LogInformation("User {Email} registered successfully with role {RoleName}", dto.Email, roleName);
-            return await IssueTokensAsync(user, response);
+        
+            return new AuthResponseDto
+            {
+                Email = user.Email,
+                Token = "Please confirm your email first"
+            };
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto, HttpResponse response)
@@ -84,6 +103,8 @@ namespace PetAdopt.Infrastructure.Services
                 _logger.LogWarning("Login attempt for unapproved account: {Email}", dto.Email);
                 throw new Exception($"Your account is not approved yet. {user.Id}");
             }
+            if (!user.EmailConfirmed)
+                throw new Exception("Please confirm your email first.");
             return await IssueTokensAsync(user, response);
         }
 
@@ -181,6 +202,58 @@ namespace PetAdopt.Infrastructure.Services
                 Email = user.Email!,
                 Token = accessToken
             };
+        }
+
+        public async Task<bool> ConfirmEmailAsync(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+                throw new Exception("Email confirmation failed");
+
+            _logger.LogInformation("Email confirmed for user: {Email}", user.Email);
+            return true;
+        }
+
+        public async Task ForgotPasswordAsync(string email)
+        {
+            _logger.LogInformation("Password reset requested for: {Email}", email);
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null || !user.EmailConfirmed)
+            {
+                _logger.LogWarning("Password reset requested for non-existent or unconfirmed email: {Email}", email);
+                return;
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetLink = $"https://localhost:7249/api/Auth/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+
+            await _emailService.SendResetPasswordEmailAsync(user.Email, resetLink);
+            _logger.LogInformation("Password reset email sent to: {Email}", email);
+        }
+
+        public async Task ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            _logger.LogInformation("Resetting password for userId: {UserId}", dto.UserId);
+
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogError("Password reset failed: {Errors}", errors);
+                throw new Exception($"Password reset failed: {errors}");
+            }
+
+            _logger.LogInformation("Password reset successfully for: {Email}", user.Email);
         }
 
         private static void SetAuthCookies(

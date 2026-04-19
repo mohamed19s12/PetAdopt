@@ -27,9 +27,9 @@ namespace PetAdopt.Persistence.DependencyInjection
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             // Add this line to ensure Identity services are available
-            services.AddIdentityCore<ApplicationUser>(options => { })
-                .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<AppDbContext>();
+            services.AddIdentity<ApplicationUser, IdentityRole>(options => { })
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
 
             // Register repositories
             services.AddScoped<IPetRepository, PetRepository>();

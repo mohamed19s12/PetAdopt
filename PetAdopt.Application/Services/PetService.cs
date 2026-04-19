@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Repositories;
@@ -20,34 +21,27 @@ namespace PetAdopt.Application.Services
         private readonly INotificationService _notificationService;
         private readonly ILogger<PetService> _logger;
         private readonly IDistributedCache _cache;
+        private readonly IMapper _mapper;
 
 
         private const string PetsCacheKey = "all_pets";
 
-        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger, IDistributedCache cache)
+        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger, IDistributedCache cache, IMapper mapper)
         {
             _petRepository = petRepository;
             _notificationService = notificationService;
             _logger = logger;
             _cache = cache;
+            _mapper = mapper;
         }
 
         public async Task<int> CreateAsync(CreatePetDto dto, string userId)
         {
             _logger.LogInformation("Creating pet: {PetName} for Owner: {UserId}", dto.Name, userId);
             //Mapping CreatePetDto to Pet Entity
-            var pet = new Pet
-            {
-                Name = dto.Name,
-                Age = dto.Age,
-                Breed = dto.Breed,
-                Gender = dto.Gender,
-                HealthStatus = dto.HealthStatus,
-                Description = dto.Description,
-                Location = dto.Location,
-                OwnerId = userId,
-                Status = PetStatus.Pending
-            };
+            var pet = _mapper.Map<Pet>(dto);
+            pet.OwnerId = userId;
+            pet.Status = PetStatus.Pending;
 
             await _petRepository.AddAsync(pet);
             await _petRepository.SaveChangesAsync();
@@ -98,15 +92,8 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Retrieving all pets");
             var pets = await _petRepository.GetAllAsync();
 
-            var result = pets.Select(p => new PetDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Breed = p.Breed,
-                Location = p.Location,
-                Status = p.Status.ToString()
-
-            }).ToList();
+            //Mapping Pet Entities to PetDto
+            var result = _mapper.Map<List<PetDto>>(pets);
 
             //Store Data in Cache for 5 minutes
             await _cache.SetStringAsync(PetsCacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
@@ -138,14 +125,7 @@ namespace PetAdopt.Application.Services
                 throw new Exception("Pet not found");
             }
 
-            var result =  new PetDto
-            {
-                Id = pet.Id,
-                Name = pet.Name,
-                Breed = pet.Breed,
-                Location = pet.Location,
-                Status = pet.Status.ToString()
-            };
+            var result =  _mapper.Map<PetDto>(pet);
 
             await _cache.SetStringAsync(cacheKey , JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
             {
@@ -173,13 +153,7 @@ namespace PetAdopt.Application.Services
             }
 
             // Update the pet properties
-            pet.Name = dto.Name;
-            pet.Age = dto.Age;
-            pet.Breed = dto.Breed;
-            pet.Gender = dto.Gender;
-            pet.HealthStatus = dto.HealthStatus;
-            pet.Description = dto.Description;
-            pet.Location = dto.Location;
+            _mapper.Map(dto, pet);
 
             await _petRepository.UpdateAsync(pet);
             await _petRepository.SaveChangesAsync();
@@ -219,15 +193,7 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Found {PetCount} pets", totalCount);
             return new PageResultDto<PetDto>
             {
-                Items = pets.Select(p => new PetDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Breed = p.Breed,
-                    Location = p.Location,
-                    Status = p.Status.ToString(),
-                    Age = p.Age
-                }).ToList() ,
+                Items = pets.Select(p => _mapper.Map<PetDto>(p)).ToList(),
                 TotalCount = totalCount,
                 Page = filter.Page,
                 PageSize = filter.PageSize
@@ -267,14 +233,7 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Retrieving pending pets for admin panel");
             var pendingPets = await _petRepository.GetPendingAsync();
             _logger.LogInformation("Found {PetCount} pending pets", pendingPets.Count);
-            return pendingPets.Select(p => new PetDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Breed = p.Breed,
-                Location = p.Location,
-                Status = p.Status.ToString()
-            }).ToList();
+            return pendingPets.Select(p => _mapper.Map<PetDto>(p)).ToList();
 
         }
 
@@ -283,14 +242,7 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Retrieving pets for owner: {OwnerId}", ownerId);
             var pets = await _petRepository.GetByOwnerIdAsync(ownerId);
             _logger.LogInformation("Found {PetCount} pets for owner: {OwnerId}", pets.Count, ownerId);
-            return pets.Select(p => new PetDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Breed = p.Breed,
-                Location = p.Location,
-                Status = p.Status.ToString()
-            }).ToList();
+            return pets.Select(p => _mapper.Map<PetDto>(p)).ToList();
         }
 
 

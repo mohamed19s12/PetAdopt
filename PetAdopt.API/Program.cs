@@ -53,7 +53,7 @@ builder.Host.UseSerilog();
 //Adding Services For Other Layers
 builder.Services.AddApplication();
 builder.Services.AddPersistence(builder.Configuration);
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add Services
 builder.Services.AddControllers()
@@ -192,6 +192,21 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+//CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3000"    // React
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // allow cookies and authentication headers to sent in cross-origin requests
+    });
+});
+
 
 var app = builder.Build();
 
@@ -212,10 +227,13 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
+app.UseRateLimiter();
+
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication(); 
 app.UseAuthorization();
 
-app.UseRateLimiter();
 
 app.MapHub<NotificationHub>("/hubs/notifications");
 

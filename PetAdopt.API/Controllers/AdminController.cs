@@ -55,7 +55,7 @@ namespace PetAdopt.API.Controllers
         [HttpGet("all-owners")]
         public async Task<IActionResult> GetAllOwners()
         {
-            var allOwners = await _userManager.GetUsersInRoleAsync("Adopter");
+            var allOwners = await _userManager.GetUsersInRoleAsync("Owner");
             var result = allOwners.Select(u => new
             {
                 u.Id,

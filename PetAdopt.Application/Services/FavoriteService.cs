@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Repositories;
@@ -18,12 +19,14 @@ namespace PetAdopt.Application.Services
         private readonly IFavoriteRepository _favoriteRepository;
         private readonly ILogger<FavoriteService> _logger;
         private readonly IDistributedCache _cache;
+        private readonly IMapper _mapper;
 
-        public FavoriteService(IFavoriteRepository favoriteRepository, ILogger<FavoriteService> logger, IDistributedCache cache)
+        public FavoriteService(IFavoriteRepository favoriteRepository, ILogger<FavoriteService> logger, IDistributedCache cache, IMapper mapper)
         {
             _favoriteRepository = favoriteRepository;
             _logger = logger;
             _cache = cache;
+            _mapper = mapper;
         }
 
         public async Task AddToFavorites(string userId, int petId)
@@ -42,11 +45,7 @@ namespace PetAdopt.Application.Services
                 throw new Exception("This pet not exists");
 
             //IS NOT EXISTS
-            var favorite = new Favorite 
-            { 
-                UserId = userId,
-                PetId = petId
-            };
+            var favorite = new Favorite { UserId = userId, PetId = petId };
 
             await _favoriteRepository.AddAsync(favorite);
             await _favoriteRepository.SaveChangesAsync();
@@ -70,14 +69,7 @@ namespace PetAdopt.Application.Services
             var favorites = await _favoriteRepository.GetByUserFavoritesAsync(userId);
 
             //f => Each Favorite that i Take Pet from it
-            var result = favorites.Select(f => new PetDto
-            {
-                Id = f.Pet.Id,
-                Name = f.Pet.Name,
-                Breed = f.Pet.Breed,
-                Location = f.Pet.Location,
-                Status = f.Pet.Status.ToString()
-            }).ToList();
+            var result = favorites.Select(p => _mapper.Map<PetDto>(p)).ToList();
 
             await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
             {

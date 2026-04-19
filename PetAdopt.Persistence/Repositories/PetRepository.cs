@@ -22,12 +22,9 @@ namespace PetAdopt.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<int> AddAsync(Pet pet)
+        public async Task AddAsync(Pet pet)
         {
             _context.Pets.Add(pet);
-            await _context.SaveChangesAsync();
-            return pet.Id;
-
         }
 
         public Task DeleteAsync(int id)

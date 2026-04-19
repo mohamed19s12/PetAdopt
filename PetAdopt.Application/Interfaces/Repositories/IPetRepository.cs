@@ -11,7 +11,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
 {
     public interface IPetRepository
     {
-        Task<int> AddAsync(Pet pet);
+        Task AddAsync(Pet pet);
         Task<List<Pet>> GetAllAsync();
         Task<Pet> GetByIdAsync(int id);
 

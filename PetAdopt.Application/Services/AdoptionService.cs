@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PetAdopt.Application.DTOs.Adoption;
@@ -20,13 +21,15 @@ namespace PetAdopt.Application.Services
         private readonly IPetRepository _PetRepo;
         private readonly INotificationService _NotificationService;
         private readonly ILogger<AdoptionService> _logger;
+        private readonly IMapper _mapper;
 
-        public AdoptionService(IAdoptionRequestRepository adoptionRepo, IPetRepository petRepo, INotificationService notificationService, ILogger<AdoptionService> logger)
+        public AdoptionService(IAdoptionRequestRepository adoptionRepo, IPetRepository petRepo, INotificationService notificationService, ILogger<AdoptionService> logger, IMapper mapper)
         {
             _AdoptionRepo = adoptionRepo;
             _PetRepo = petRepo;
             _NotificationService = notificationService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public async Task Acceept(int requestId)
@@ -129,14 +132,7 @@ namespace PetAdopt.Application.Services
         public async Task<List<AdoptionRequestDto>> GetMyRequestsAsync(string adopterId, RequestStatus? status = null)
         {
             var requests = await _AdoptionRepo.GetByAdopterIdAsync(adopterId, status);
-            return requests.Select(r => new AdoptionRequestDto
-            {
-                Id = r.Id,
-                PetId = r.PetId,
-                PetName = r.Pet.Name,
-                Status = r.Status.ToString(),
-                RequestedAt = r.RequestedAt
-            }).ToList();
+            return requests.Select(r => _mapper.Map<AdoptionRequestDto>(r)).ToList();
         }
 
         public async Task<List<AdoptionRequestDto>> GetOwnerRequestsAsync(string ownerId)
@@ -145,14 +141,7 @@ namespace PetAdopt.Application.Services
             var requests = await _AdoptionRepo.GetByOwnerIdAsync(ownerId);
 
             _logger.LogInformation("Found {RequestCount} adoption requests for owner: {OwnerId}", requests.Count, ownerId);
-            return requests.Select(r => new AdoptionRequestDto
-            {
-                Id = r.Id,
-                PetId = r.PetId,
-                PetName = r.Pet.Name,
-                Status = r.Status.ToString(),
-                RequestedAt = r.RequestedAt
-            }).ToList();
+            return requests.Select(r => _mapper.Map<AdoptionRequestDto>(r)).ToList();
         }
     }
 }

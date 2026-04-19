@@ -12,3 +12,4 @@ namespace PetAdopt.Domain.Enums
         Name 
     }
 }
+

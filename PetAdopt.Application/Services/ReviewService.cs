@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using PetAdopt.Application.DTOs.Review;
 using PetAdopt.Application.Interfaces.Repositories;
@@ -18,12 +19,14 @@ namespace PetAdopt.Application.Services
         private readonly IReviewRepository _reviewRepository;
         private readonly ILogger<ReviewService> _logger;
         private readonly IDistributedCache _cache;
+        private readonly IMapper _mapper;
 
-        public ReviewService(IReviewRepository reviewRepository, ILogger<ReviewService> logger, IDistributedCache cache)
+        public ReviewService(IReviewRepository reviewRepository, ILogger<ReviewService> logger, IDistributedCache cache, IMapper mapper)
         {
             _reviewRepository = reviewRepository;
             _logger = logger;
             _cache = cache;
+            _mapper = mapper;
         }
 
         public async Task AddReviewAsync(string reviewerId, CreateReviewDto reviewDto)
@@ -49,14 +52,8 @@ namespace PetAdopt.Application.Services
                 _logger.LogWarning("User {ReviewerId} has already reviewed pet {PetId}", reviewerId, reviewDto.PetId);
                 throw new InvalidOperationException("You have already reviewed this pet");
             }
-            var review = new Review
-            {
-                ReviewerId = reviewerId,
-                TargetUserId = reviewDto.TargetUserId,
-                PetId = reviewDto.PetId,
-                Rating = reviewDto.Rating,
-                Comment = reviewDto.Comment
-            };
+            var review = _mapper.Map<Review>(reviewDto);
+            review.ReviewerId = reviewerId;
 
             await _reviewRepository.AddAsync(review);
             await _reviewRepository.SaveChangesAsync();
