@@ -25,17 +25,36 @@ namespace PetAdopt.API.Controllers
             _petService = petService;
         }
 
-        [HttpGet("pending-adopters")]
-        public async Task<IActionResult> GetPendingAdopters()
+        [HttpDelete("delete-user/{userId}")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var user =await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound(ApiResponse<object>.Fail("User not found", 404));
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest(ApiResponse<object>.Fail(errors));
+            }
+
+            return Ok(ApiResponse<object>.Success(null, "User deleted successfully"));
+        }
+
+        [HttpGet("pending-users")]
+        public async Task<IActionResult> GetPendingUsers()
         {
             var pendingUsers = await _userManager.Users.Where(u => !u.IsApproved).ToListAsync();
             var result = pendingUsers.Select(u => new
             {
                 u.Id,
                 u.FullName,
-                u.Email
+                u.Email,
+                Roles = _userManager.GetRolesAsync(u).Result
             });
-            return Ok(ApiResponse<object>.Success(result, "Fetched pending adopters successfully"));
+            return Ok(ApiResponse<object>.Success(result, "Fetched pending users successfully"));
         }
 
         [HttpGet("all-adopters")]

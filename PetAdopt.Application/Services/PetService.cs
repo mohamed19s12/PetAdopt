@@ -127,6 +127,7 @@ namespace PetAdopt.Application.Services
 
             var result =  _mapper.Map<PetDto>(pet);
 
+
             await _cache.SetStringAsync(cacheKey , JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)

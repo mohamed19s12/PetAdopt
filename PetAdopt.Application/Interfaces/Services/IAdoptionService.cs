@@ -15,5 +15,7 @@ namespace PetAdopt.Application.Interfaces.Services
         Task Reject(int requestId);
         Task<List<AdoptionRequestDto>> GetMyRequestsAsync(string adopterId , RequestStatus? status = null);
         Task<List<AdoptionRequestDto>> GetOwnerRequestsAsync(string ownerId);
+
+        Task<List<AdoptionRequestDto>> GetAllRequestsAsync();
     }
 }

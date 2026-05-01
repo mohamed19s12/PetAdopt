@@ -24,7 +24,11 @@ namespace PetAdopt.Persistence.DependencyInjection
         {
             // Register DbContext
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure();
+                }));
 
             // Add this line to ensure Identity services are available
             services.AddIdentity<ApplicationUser, IdentityRole>(options => { })

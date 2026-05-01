@@ -64,5 +64,14 @@ namespace PetAdopt.Persistence.Repositories
             _context.AdoptionRequests.Remove(request);
             return Task.CompletedTask;
         }
+
+        public async Task<List<AdoptionRequest>> GetAllRequestsAsync()
+        {
+            return await _context.AdoptionRequests
+                .Include(a => a.Pet)
+                    .ThenInclude(p => p.Owner)
+                .Include(a => a.Adopter)
+                .ToListAsync();
+        }
     }
 }

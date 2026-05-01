@@ -25,6 +25,17 @@ namespace PetAdopt.Persistence.Repositories
             await _context.Reviews.AddAsync(review);
         }
 
+        public Task DeleteAsync(Review review)
+        {
+            _context.Reviews.Remove(review);
+            return Task.CompletedTask;
+        }
+
+        public async Task<Review> GetByIdAsync(int id)
+        {
+           return await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
+        }
+
         public async Task<List<Review>> GetByTargetUserIdAsync(string targetUserId)
         {
             return await _context.Reviews

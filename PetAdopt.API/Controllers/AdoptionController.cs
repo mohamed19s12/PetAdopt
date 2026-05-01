@@ -50,7 +50,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "Adoption request rejected"));
         }
 
-        [HttpGet("my-requests")]
+        [HttpGet("adopter-requests")]
         [Authorize(Roles = "Adopter")]
         public async Task<IActionResult> GetMyRequests([FromQuery] RequestStatus? status)
         {
@@ -67,6 +67,14 @@ namespace PetAdopt.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
             var result = await _adoptionService.GetOwnerRequestsAsync(userId);
+            return Ok(ApiResponse<List<AdoptionRequestDto>>.Success(result));
+        }
+
+        [HttpGet("all-requests")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllRequests()
+        {
+            var result = await _adoptionService.GetAllRequestsAsync();
             return Ok(ApiResponse<List<AdoptionRequestDto>>.Success(result));
         }
     }

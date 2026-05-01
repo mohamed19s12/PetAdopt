@@ -64,6 +64,26 @@ namespace PetAdopt.Application.Services
                 reviewerId, reviewDto.PetId);
         }
 
+        public async Task DeleteReviewAsync(string userId, int reviewId)
+        {
+            var review =await _reviewRepository.GetByIdAsync(reviewId);
+
+            if (review == null)
+            {
+                _logger.LogWarning("Review with Id {ReviewId} not found", reviewId);
+                throw new KeyNotFoundException("Review not found");
+            }
+            if (review.ReviewerId != userId)
+            {
+                _logger.LogWarning("User {UserId} is not the owner of review {ReviewId} and cannot delete it", userId, reviewId);
+                throw new UnauthorizedAccessException("You can only delete your own reviews");
+            }
+
+            await _reviewRepository.DeleteAsync(review);
+            await _reviewRepository.SaveChangesAsync();
+            await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
+        }
+
         public async Task<List<ReviewDto>> GetReviewsAsync(string targetUserId)
         {
             var cacheKey = $"reviews_{targetUserId}";
@@ -93,7 +113,34 @@ namespace PetAdopt.Application.Services
             return result;
         }
 
+        public async Task UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto)
+        {
+            var review =await _reviewRepository.GetByIdAsync(reviewId);
+          
+            if (review == null)
+            {
+                _logger.LogWarning("Review with Id {ReviewId} not found", reviewId);
+                throw new KeyNotFoundException("Review not found");
+            }
+            if (review.ReviewerId != userId)
+            {
+                _logger.LogWarning("User {UserId} is not the owner of review {ReviewId} and cannot update it", userId, reviewId);
+                throw new UnauthorizedAccessException("You can only update your own reviews");
+            }   
+            if (dto.Rating < 1 || dto.Rating > 5)
+            {
+                _logger.LogWarning("Invalid rating: {Rating}", dto.Rating);
+                throw new InvalidOperationException("Rating must be between 1 and 5");
+            }
 
+            review.Rating = dto.Rating;
+            review.Comment = dto.Comment;
 
+            await _reviewRepository.SaveChangesAsync();
+            await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
+                _logger.LogInformation(
+                    "Review with Id {ReviewId} updated by User {UserId}",
+                    reviewId, userId);
+        }
     }
 }

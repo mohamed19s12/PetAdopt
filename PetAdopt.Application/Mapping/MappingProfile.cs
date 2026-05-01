@@ -37,6 +37,8 @@ namespace PetAdopt.Application.Mapping
             // Adoption //
             CreateMap<AdoptionRequest, AdoptionRequestDto>()
                 .ForMember(dest => dest.PetName, opt => opt.MapFrom(src => src.Pet.Name))
+                    .ForMember(dest => dest.AdopterName, opt => opt.MapFrom(src => src.Adopter.FullName))  
+                    .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => src.Pet.Owner.FullName))
                 .ForMember(dest => dest.Status,  opt => opt.MapFrom(src => src.Status.ToString()));
 
             // Review Mappings //

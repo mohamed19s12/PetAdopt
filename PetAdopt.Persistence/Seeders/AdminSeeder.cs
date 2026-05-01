@@ -34,7 +34,8 @@ namespace PetAdopt.Persistence.Seeders
                     UserName = adminEmail,
                     Email = adminEmail,
                     FullName = "Admin",
-                    IsApproved = true
+                    IsApproved = true,
+                    EmailConfirmed = true
                 };
                 var result = await userManager.CreateAsync(admin, "Admin@123");
                 if (result.Succeeded)

@@ -24,7 +24,7 @@ namespace PetAdopt.API.Controllers
         public async Task<IActionResult> Register([FromForm] RegisterDto dto)
         {
             var result = await _authService.RegisterAsync(dto, Response);
-            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Registered Successfully , please wait admin to aprove your account!"));
+            return Ok(ApiResponse<AuthResponseDto>.Success(result, "Please Confirm your Email And then Wait For Admin Approval"));
         }
 
         [HttpPost("login")]

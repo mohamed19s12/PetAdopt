@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PetAdopt.API.Middlewares;
@@ -11,6 +12,7 @@ using PetAdopt.Domain.Enums;
 using PetAdopt.Infrastructure.DependencyInjection;
 using PetAdopt.Infrastructure.Hubs;
 using PetAdopt.Persistence;
+using PetAdopt.Persistence.Context;
 using PetAdopt.Persistence.DependencyInjection;
 using PetAdopt.Persistence.Seeders;
 using Serilog;
@@ -35,17 +37,6 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithMachineName()
     .Enrich.WithEnvironmentName()
     .WriteTo.Console()
-    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(
-        new Uri(builder.Configuration["Serilog:ElasticSearch:Uri"]))
-    {
-        IndexFormat = string.Format(
-            builder.Configuration["Serilog:ElasticSearch:IndexFormat"],
-            DateTime.UtcNow),
-        AutoRegisterTemplate = true,
-        AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv8,
-        NumberOfReplicas = 1,
-        NumberOfShards = 2
-    })
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -76,7 +67,32 @@ builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 //SignalR
 builder.Services.AddSignalR();
 
-builder.Services.AddSwaggerGen();
+//Swagger 
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 //JWT Authentication
 builder.Services.AddAuthentication(options =>
@@ -151,7 +167,7 @@ builder.Services.AddRateLimiter(options =>
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     AutoReplenishment = true,
-                    PermitLimit = 20, //1000 requests
+                    PermitLimit = 1000, //1000 requests
                     Window = TimeSpan.FromMinutes(1)
                 });
         }
@@ -161,7 +177,7 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 10,             // 100 requests
+                PermitLimit = 150,             // 100 requests
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0 // NO wait
             });
@@ -176,7 +192,7 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: userId ?? ip ?? "anonymous",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 5,
+                PermitLimit = 50,
                 Window = TimeSpan.FromMinutes(1), // 5 request per 15 min
                 QueueLimit = 0
             });
@@ -199,7 +215,9 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
-                "http://localhost:3000"    // React
+                  "http://localhost:3000",
+                  "http://localhost:5173",
+                  "http://localhost:8080"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -213,15 +231,16 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 
 // Middleware
-if (app.Environment.IsDevelopment())
-{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseExceptionHandler();
 
-app.UseHttpsRedirection();
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseHttpsRedirection();
+//}
 
 // SignalR Hub Mapping
 
@@ -231,13 +250,35 @@ app.UseRateLimiter();
 
 app.UseCors("AllowFrontend");
 
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.MapControllers();
+
+//Auto Migration For Deployment
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var retries = 10;
+    while (retries > 0)
+    {
+        try
+        {
+            db.Database.Migrate();
+            break;
+        }
+        catch (Exception)
+        {
+            retries--;
+            if (retries == 0) throw;
+            Thread.Sleep(5000); 
+        }
+    }
+}
 
 // Admin Seeding
 using (var scope = app.Services.CreateScope())

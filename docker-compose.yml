@@ -1,0 +1,50 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: PetAdopt.API/Dockerfile
+    container_name: petadopt-api
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PetAdoptDb;User Id=sa;Password=Your@Password123;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=True"
+      JWT__Key: "JF;L f;LF jo;pfjJ 946&$ *Q3 U74 fef*pru#*&yc yr#*&c"
+      JWT__Issuer: "PetAdopt"
+      JWT__Audience: "PetAdoptUsers"
+      JWT__DurationInMinutes: "60"
+      Redis__ConnectionString: "redis:6379"
+      EmailSettings__Host: "smtp.gmail.com"
+      EmailSettings__Port: "587"
+      EmailSettings__SenderEmail: "mohammeed19s12@gmail.com"
+      EmailSettings__SenderName: "PetAdopt"
+      EmailSettings__Password: "ztbicakcqqfvslkc"
+      AppSettings__BaseUrl: "http://localhost:8080"
+    depends_on:
+      sqlserver:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: on-failure
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: petadopt-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Your@Password123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  redis:
+    image: redis:7-alpine
+    container_name: petadopt-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  sqlserver_data:

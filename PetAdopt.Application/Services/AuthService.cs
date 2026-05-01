@@ -74,7 +74,9 @@ namespace PetAdopt.Infrastructure.Services
             await _userManager.AddToRoleAsync(user, roleName);
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = $"https://localhost:7249/api/Auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+
+            var baseUrl = _configuration["AppSettings:BaseUrl"];
+            var confirmationLink = $"{baseUrl}/api/Auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
             await _emailService.SendConfirmationEmailAsync(user.Email, confirmationLink);
 
             _logger.LogInformation("Confirmation email sent to {Email}", user.Email);
@@ -84,8 +86,7 @@ namespace PetAdopt.Infrastructure.Services
         
             return new AuthResponseDto
             {
-                Email = user.Email,
-                Token = "Please confirm your email first"
+                Email = user.Email
             };
         }
 
@@ -210,7 +211,10 @@ namespace PetAdopt.Infrastructure.Services
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
-            var result = await _userManager.ConfirmEmailAsync(user, token);
+            //Decode the token 
+            var decodedToken = Uri.UnescapeDataString(token);
+
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
             if (!result.Succeeded)
                 throw new Exception("Email confirmation failed");
 
@@ -231,7 +235,9 @@ namespace PetAdopt.Infrastructure.Services
             }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var resetLink = $"https://localhost:7249/api/Auth/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            var baseUrl = _configuration["AppSettings:BaseUrl"];
+
+            var resetLink = $"{baseUrl}/api/Auth/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
             await _emailService.SendResetPasswordEmailAsync(user.Email, resetLink);
             _logger.LogInformation("Password reset email sent to: {Email}", email);
@@ -245,7 +251,10 @@ namespace PetAdopt.Infrastructure.Services
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
-            var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+            //decode token
+            var decodedToken = Uri.UnescapeDataString(dto.Token);
+
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));

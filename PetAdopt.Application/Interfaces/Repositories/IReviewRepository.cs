@@ -13,6 +13,10 @@ namespace PetAdopt.Application.Interfaces.Repositories
         Task<List<Review>> GetByTargetUserIdAsync(string targetUserId);
         Task<bool> HasAdoptedPetAsync(string adopterId, int petId);
         Task<bool> HasReviewedPetAsync(string reviewerId, int petId);
+
+        Task<Review> GetByIdAsync(int id);
+        Task DeleteAsync(Review review);
+
         Task SaveChangesAsync();
     }
 }

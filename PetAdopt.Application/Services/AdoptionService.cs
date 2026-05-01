@@ -129,12 +129,14 @@ namespace PetAdopt.Application.Services
                 $"Your adoption request for {request.Pet.Name} has been rejected.");
         }
 
+        //Getting adopter requests
         public async Task<List<AdoptionRequestDto>> GetMyRequestsAsync(string adopterId, RequestStatus? status = null)
         {
             var requests = await _AdoptionRepo.GetByAdopterIdAsync(adopterId, status);
             return requests.Select(r => _mapper.Map<AdoptionRequestDto>(r)).ToList();
         }
 
+        //Getting owner requests
         public async Task<List<AdoptionRequestDto>> GetOwnerRequestsAsync(string ownerId)
         {
             _logger.LogInformation("Getting adoption requests for owner: {OwnerId}", ownerId);
@@ -142,6 +144,12 @@ namespace PetAdopt.Application.Services
 
             _logger.LogInformation("Found {RequestCount} adoption requests for owner: {OwnerId}", requests.Count, ownerId);
             return requests.Select(r => _mapper.Map<AdoptionRequestDto>(r)).ToList();
+        }
+
+        public async Task<List<AdoptionRequestDto>> GetAllRequestsAsync()
+        {
+            var requests = await _AdoptionRepo.GetAllRequestsAsync();
+            return requests.Select(req => _mapper.Map<AdoptionRequestDto>(req)).ToList();
         }
     }
 }

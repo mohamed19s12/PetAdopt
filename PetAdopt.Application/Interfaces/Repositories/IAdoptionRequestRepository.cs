@@ -26,5 +26,8 @@ namespace PetAdopt.Application.Interfaces.Repositories
 
         //delete request if it rejected from the owner 
         Task DeleteAsync(AdoptionRequest request);
+
+        //for admin
+        Task<List<AdoptionRequest>> GetAllRequestsAsync();
     }
 }

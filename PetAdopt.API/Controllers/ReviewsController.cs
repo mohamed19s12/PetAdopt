@@ -37,6 +37,28 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<List<ReviewDto>>.Success(result));
         }
 
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Adopter")]
+        public async Task<IActionResult> UpdateReview(int id, [FromForm] UpdateReviewDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            await _reviewService.UpdateReviewAsync(userId, id, dto);
+            return Ok(ApiResponse<object>.Success(null, "Review updated successfully"));
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Adopter")]
+        public async Task<IActionResult> DeleteReview(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            await _reviewService.DeleteReviewAsync(userId, id);
+            return Ok(ApiResponse<object>.Success(null, "Review deleted successfully"));
+        }
+
 
 
     }

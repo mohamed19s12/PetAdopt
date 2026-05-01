@@ -17,5 +17,6 @@ namespace PetAdopt.Application.DTOs.Pet
         //Age For Sort
         public int Age { get; set; }
 
+        public List<string> Images { get; set; } = new();
     }
 }
