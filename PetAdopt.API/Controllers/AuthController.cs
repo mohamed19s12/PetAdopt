@@ -52,29 +52,29 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success("Logged out successfully"));
         }
 
-        [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
-        {
-            await _authService.ConfirmEmailAsync(userId, token);
-            return Ok(ApiResponse<object>.Success(null, "Email confirmed successfully!"));
-        }
+        //[HttpGet("confirm-email")]
+        //public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+        //{
+        //    await _authService.ConfirmEmailAsync(userId, token);
+        //    return Ok(ApiResponse<object>.Success(null, "Email confirmed successfully!"));
+        //}
 
-        [HttpPost("forgot-password")]
-        [EnableRateLimiting("Auth-Limit")]
-        public async Task<IActionResult> ForgotPassword([FromForm] string email)
-        {
-            await _authService.ForgotPasswordAsync(email);
-            // return the same response regardless of whether the email exists to prevent user enumeration
-            return Ok(ApiResponse<object>.Success(null,
-                "If this email exists, you will receive a reset link."));
-        }
+        //[HttpPost("forgot-password")]
+        //[EnableRateLimiting("Auth-Limit")]
+        //public async Task<IActionResult> ForgotPassword([FromForm] string email)
+        //{
+        //    await _authService.ForgotPasswordAsync(email);
+        //    // return the same response regardless of whether the email exists to prevent user enumeration
+        //    return Ok(ApiResponse<object>.Success(null,
+        //        "If this email exists, you will receive a reset link."));
+        //}
 
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto dto)
-        {
-            await _authService.ResetPasswordAsync(dto);
-            return Ok(ApiResponse<object>.Success(null, "Password reset successfully!"));
-        }
+        //[HttpPost("reset-password")]
+        //public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto dto)
+        //{
+        //    await _authService.ResetPasswordAsync(dto);
+        //    return Ok(ApiResponse<object>.Success(null, "Password reset successfully!"));
+        //}
 
     }
 }

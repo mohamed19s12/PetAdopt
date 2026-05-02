@@ -73,13 +73,13 @@ namespace PetAdopt.Infrastructure.Services
             }
             await _userManager.AddToRoleAsync(user, roleName);
 
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+           // var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            var baseUrl = _configuration["AppSettings:BaseUrl"];
-            var confirmationLink = $"{baseUrl}/api/Auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-            await _emailService.SendConfirmationEmailAsync(user.Email, confirmationLink);
+            //var baseUrl = _configuration["AppSettings:BaseUrl"];
+            //var confirmationLink = $"{baseUrl}/api/Auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            //await _emailService.SendConfirmationEmailAsync(user.Email, confirmationLink);
 
-            _logger.LogInformation("Confirmation email sent to {Email}", user.Email);
+            //_logger.LogInformation("Confirmation email sent to {Email}", user.Email);
 
 
             _logger.LogInformation("User {Email} registered successfully with role {RoleName}", dto.Email, roleName);
@@ -104,8 +104,8 @@ namespace PetAdopt.Infrastructure.Services
                 _logger.LogWarning("Login attempt for unapproved account: {Email}", dto.Email);
                 throw new Exception($"Your account is not approved yet. {user.Id}");
             }
-            if (!user.EmailConfirmed)
-                throw new Exception("Please confirm your email first.");
+            //if (!user.EmailConfirmed)
+            //    throw new Exception("Please confirm your email first.");
             return await IssueTokensAsync(user, response);
         }
 
@@ -174,6 +174,66 @@ namespace PetAdopt.Infrastructure.Services
             response.Cookies.Delete("jwt");
         }
 
+        //public async Task<bool> ConfirmEmailAsync(string userId, string token)
+        //{
+        //    var user = await _userManager.FindByIdAsync(userId);
+        //    if (user == null)
+        //        throw new KeyNotFoundException("User not found");
+
+        //    //Decode the token 
+        //    var decodedToken = Uri.UnescapeDataString(token);
+
+        //    var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+        //    if (!result.Succeeded)
+        //        throw new Exception("Email confirmation failed");
+
+        //    _logger.LogInformation("Email confirmed for user: {Email}", user.Email);
+        //    return true;
+        //}
+
+        //public async Task ForgotPasswordAsync(string email)
+        //{
+        //    _logger.LogInformation("Password reset requested for: {Email}", email);
+
+        //    var user = await _userManager.FindByEmailAsync(email);
+
+        //    if (user == null || !user.EmailConfirmed)
+        //    {
+        //        _logger.LogWarning("Password reset requested for non-existent or unconfirmed email: {Email}", email);
+        //        return;
+        //    }
+
+        //    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        //    var baseUrl = _configuration["AppSettings:BaseUrl"];
+
+        //    var resetLink = $"{baseUrl}/api/Auth/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+
+        //    await _emailService.SendResetPasswordEmailAsync(user.Email, resetLink);
+        //    _logger.LogInformation("Password reset email sent to: {Email}", email);
+        //}
+
+        //public async Task ResetPasswordAsync(ResetPasswordDto dto)
+        //{
+        //    _logger.LogInformation("Resetting password for userId: {UserId}", dto.UserId);
+
+        //    var user = await _userManager.FindByIdAsync(dto.UserId);
+        //    if (user == null)
+        //        throw new KeyNotFoundException("User not found");
+
+        //    //decode token
+        //    var decodedToken = Uri.UnescapeDataString(dto.Token);
+
+        //    var result = await _userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+        //    if (!result.Succeeded)
+        //    {
+        //        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        //        _logger.LogError("Password reset failed: {Errors}", errors);
+        //        throw new Exception($"Password reset failed: {errors}");
+        //    }
+
+        //    _logger.LogInformation("Password reset successfully for: {Email}", user.Email);
+        //}
+
         private async Task<AuthResponseDto> IssueTokensAsync(ApplicationUser user, HttpResponse response)
         {
             _logger.LogInformation("Issuing access and refresh tokens for user: {Email}", user.Email);
@@ -203,66 +263,6 @@ namespace PetAdopt.Infrastructure.Services
                 Email = user.Email!,
                 Token = accessToken
             };
-        }
-
-        public async Task<bool> ConfirmEmailAsync(string userId, string token)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                throw new KeyNotFoundException("User not found");
-
-            //Decode the token 
-            var decodedToken = Uri.UnescapeDataString(token);
-
-            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
-            if (!result.Succeeded)
-                throw new Exception("Email confirmation failed");
-
-            _logger.LogInformation("Email confirmed for user: {Email}", user.Email);
-            return true;
-        }
-
-        public async Task ForgotPasswordAsync(string email)
-        {
-            _logger.LogInformation("Password reset requested for: {Email}", email);
-
-            var user = await _userManager.FindByEmailAsync(email);
-
-            if (user == null || !user.EmailConfirmed)
-            {
-                _logger.LogWarning("Password reset requested for non-existent or unconfirmed email: {Email}", email);
-                return;
-            }
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var baseUrl = _configuration["AppSettings:BaseUrl"];
-
-            var resetLink = $"{baseUrl}/api/Auth/reset-password?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-
-            await _emailService.SendResetPasswordEmailAsync(user.Email, resetLink);
-            _logger.LogInformation("Password reset email sent to: {Email}", email);
-        }
-
-        public async Task ResetPasswordAsync(ResetPasswordDto dto)
-        {
-            _logger.LogInformation("Resetting password for userId: {UserId}", dto.UserId);
-
-            var user = await _userManager.FindByIdAsync(dto.UserId);
-            if (user == null)
-                throw new KeyNotFoundException("User not found");
-
-            //decode token
-            var decodedToken = Uri.UnescapeDataString(dto.Token);
-
-            var result = await _userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Password reset failed: {Errors}", errors);
-                throw new Exception($"Password reset failed: {errors}");
-            }
-
-            _logger.LogInformation("Password reset successfully for: {Email}", user.Email);
         }
 
         private static void SetAuthCookies(

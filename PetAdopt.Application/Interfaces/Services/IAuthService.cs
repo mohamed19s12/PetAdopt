@@ -15,9 +15,9 @@ namespace PetAdopt.Application.Interfaces.Services
         Task<AuthResponseDto> RefreshTokenAsync(HttpRequest request, HttpResponse response);
         Task LogoutAsync(HttpRequest request, HttpResponse response, string userId);
 
-        Task<bool> ConfirmEmailAsync(string userId, string token);
+        //Task<bool> ConfirmEmailAsync(string userId, string token);
 
-        Task ForgotPasswordAsync(string email);
-        Task ResetPasswordAsync(ResetPasswordDto dto);
+        //Task ForgotPasswordAsync(string email);
+        //Task ResetPasswordAsync(ResetPasswordDto dto);
     }
 }
