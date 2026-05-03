@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,7 @@ namespace PetAdopt.Persistence.Seeders
                     UserName = adminEmail,
                     Email = adminEmail,
                     FullName = "Admin",
-                    IsApproved = true,
+                    Status = UserStatus.Approved,
                     EmailConfirmed = true
                 };
                 var result = await userManager.CreateAsync(admin, "Admin@123");

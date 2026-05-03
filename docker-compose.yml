@@ -41,11 +41,11 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Your@Password123 -Q 'SELECT 1' -No"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Your@Password123' -Q 'SELECT 1' -No -C"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
 
   redis:
     image: redis:7-alpine

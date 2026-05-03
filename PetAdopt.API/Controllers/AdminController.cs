@@ -7,7 +7,9 @@ using PetAdopt.Application.DTOs;
 using PetAdopt.Application.DTOs.Auth;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Services;
+using PetAdopt.Application.Services;
 using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 
 namespace PetAdopt.API.Controllers
 {
@@ -18,11 +20,14 @@ namespace PetAdopt.API.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IPetService _petService;
+        private readonly IDashboardService _dashboardService;
 
-        public AdminController(UserManager<ApplicationUser> userManager, IPetService petService)
+
+        public AdminController(UserManager<ApplicationUser> userManager, IPetService petService, IDashboardService dashboardService)
         {
             _userManager = userManager;
             _petService = petService;
+            _dashboardService = dashboardService;
         }
 
         [HttpDelete("delete-user/{userId}")]
@@ -46,13 +51,14 @@ namespace PetAdopt.API.Controllers
         [HttpGet("pending-users")]
         public async Task<IActionResult> GetPendingUsers()
         {
-            var pendingUsers = await _userManager.Users.Where(u => !u.IsApproved).ToListAsync();
+            var pendingUsers = await _userManager.Users.Where(u => u.Status == UserStatus.PendingApproval).ToListAsync();
             var result = pendingUsers.Select(u => new
             {
                 u.Id,
                 u.FullName,
                 u.Email,
-                Roles = _userManager.GetRolesAsync(u).Result
+                Roles = _userManager.GetRolesAsync(u).Result,
+                u.Status
             });
             return Ok(ApiResponse<object>.Success(result, "Fetched pending users successfully"));
         }
@@ -66,7 +72,7 @@ namespace PetAdopt.API.Controllers
                 u.Id,
                 u.FullName,
                 u.Email,
-                u.IsApproved
+                u.Status
             });
             return Ok(ApiResponse<object>.Success(result, "Fetched all adopters successfully"));
         }
@@ -80,7 +86,7 @@ namespace PetAdopt.API.Controllers
                 u.Id,
                 u.FullName,
                 u.Email,
-                u.IsApproved
+                u.Status
             });
             return Ok(ApiResponse<object>.Success(result, "Fetched all owners successfully"));
         }
@@ -95,7 +101,7 @@ namespace PetAdopt.API.Controllers
                 return NotFound(ApiResponse<object>.Fail("User not found", 404));
             }
             // Approve the user
-            user.IsApproved = true;
+            user.Status = UserStatus.Approved;
 
             //update and check if it succeeded
             var result = await _userManager.UpdateAsync(user);
@@ -119,11 +125,11 @@ namespace PetAdopt.API.Controllers
             }
 
             // Not allowed to reject an already approved user
-            if (user.IsApproved)
+            if (user.Status == UserStatus.Approved)
                 return BadRequest(ApiResponse<object>.Fail("User is already approved, cannot reject"));
 
             // Reject the user
-            user.IsApproved = false;
+            user.Status = UserStatus.Rejected;
             //update and check if it succeeded
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
@@ -154,6 +160,15 @@ namespace PetAdopt.API.Controllers
         {
             await _petService.RejectAsync(petId);
             return Ok(ApiResponse<object>.Success(null, "Pet rejected successfully"));
+        }
+
+
+        //Dashboard stats
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard()
+        {
+            var result = await _dashboardService.GetDashboardStatsAsync();
+            return Ok(ApiResponse<DashboardDto>.Success(result));
         }
     }
 }

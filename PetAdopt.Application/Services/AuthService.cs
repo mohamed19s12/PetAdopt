@@ -8,6 +8,7 @@ using PetAdopt.Application.DTOs.Auth;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
 using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,7 +53,7 @@ namespace PetAdopt.Infrastructure.Services
                 UserName = dto.Email,
                 Email = dto.Email,
                 FullName = dto.FullName,
-                IsApproved = false
+                Status = UserStatus.PendingApproval
             };
 
             _logger.LogInformation("Registering new user: {Email}", dto.Email);
@@ -86,7 +87,8 @@ namespace PetAdopt.Infrastructure.Services
         
             return new AuthResponseDto
             {
-                Email = user.Email
+                Email = user.Email,
+                Status = UserStatus.PendingApproval
             };
         }
 
@@ -99,14 +101,25 @@ namespace PetAdopt.Infrastructure.Services
                 _logger.LogWarning("Invalid login attempt for email: {Email}", dto.Email);
                 throw new Exception("Invalid email or password");
             }
-            if (!user.IsApproved)
+            if (user.Status != UserStatus.Approved)
             {
                 _logger.LogWarning("Login attempt for unapproved account: {Email}", dto.Email);
-                throw new Exception($"Your account is not approved yet. {user.Id}");
+                return new AuthResponseDto
+                {
+                    Email = user.Email,
+                    Token = null,
+                    Status = user.Status
+                };
             }
             //if (!user.EmailConfirmed)
             //    throw new Exception("Please confirm your email first.");
-            return await IssueTokensAsync(user, response);
+            await IssueTokensAsync(user, response);
+
+            return new AuthResponseDto
+            {
+                Email = user.Email,
+                Status = user.Status
+            };
         }
 
         public async Task<AuthResponseDto> RefreshTokenAsync(HttpRequest request, HttpResponse response)
@@ -140,7 +153,14 @@ namespace PetAdopt.Infrastructure.Services
 
             _logger.LogInformation("Issuing new tokens for user: {Email} and Revoking old tokens", user.Email);
 
-            return await IssueTokensAsync(user, response);
+            await IssueTokensAsync(user, response);
+
+            return new AuthResponseDto
+            {
+                Email = user.Email,
+                Token = request.Cookies["jwt"],
+                Status = user.Status
+            };
         }
 
         public async Task LogoutAsync(HttpRequest request, HttpResponse response, string userId)
@@ -234,7 +254,7 @@ namespace PetAdopt.Infrastructure.Services
         //    _logger.LogInformation("Password reset successfully for: {Email}", user.Email);
         //}
 
-        private async Task<AuthResponseDto> IssueTokensAsync(ApplicationUser user, HttpResponse response)
+        private async Task IssueTokensAsync(ApplicationUser user, HttpResponse response)
         {
             _logger.LogInformation("Issuing access and refresh tokens for user: {Email}", user.Email);
             var accessToken = await _tokenService.CreateAccessToken(user);
@@ -257,12 +277,7 @@ namespace PetAdopt.Infrastructure.Services
             _logger.LogInformation("Refresh token stored in the database for user: {Email} with expiry: {Expiry}", user.Email, refreshTokenExpiry);
 
             SetAuthCookies(response, accessToken, refreshToken, accessTokenLifetimeMinutes, refreshTokenExpiry);
-
-            return new AuthResponseDto
-            {
-                Email = user.Email!,
-                Token = accessToken
-            };
+            
         }
 
         private static void SetAuthCookies(

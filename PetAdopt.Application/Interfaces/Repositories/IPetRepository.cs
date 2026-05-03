@@ -28,5 +28,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
 
         //Get Owner pets for each user
         Task<List<Pet>> GetByOwnerIdAsync(string ownerId);
+
+        Task<List<Pet>> GetAllStatsAsync();
     }
 }

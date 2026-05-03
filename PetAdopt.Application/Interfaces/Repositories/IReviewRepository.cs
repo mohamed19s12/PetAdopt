@@ -17,6 +17,8 @@ namespace PetAdopt.Application.Interfaces.Repositories
         Task<Review> GetByIdAsync(int id);
         Task DeleteAsync(Review review);
 
+        Task<List<Review>> GetAllStatsAsync();
+
         Task SaveChangesAsync();
     }
 }

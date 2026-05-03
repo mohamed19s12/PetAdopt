@@ -29,5 +29,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
 
         //for admin
         Task<List<AdoptionRequest>> GetAllRequestsAsync();
+
+        Task<List<AdoptionRequest>> GetAllStatsAsync();
     }
 }

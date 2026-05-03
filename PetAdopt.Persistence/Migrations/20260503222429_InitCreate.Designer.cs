@@ -12,8 +12,8 @@ using PetAdopt.Persistence.Context;
 namespace PetAdopt.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260411144248_addPetIdInReviewEntity")]
-    partial class addPetIdInReviewEntity
+    [Migration("20260503222429_InitCreate")]
+    partial class InitCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -211,9 +211,6 @@ namespace PetAdopt.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -239,6 +236,9 @@ namespace PetAdopt.Persistence.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");

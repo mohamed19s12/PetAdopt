@@ -12,8 +12,8 @@ using PetAdopt.Persistence.Context;
 namespace PetAdopt.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260409182756_CascadeDeletePet")]
-    partial class CascadeDeletePet
+    [Migration("20260503222203_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -211,9 +211,6 @@ namespace PetAdopt.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -239,6 +236,9 @@ namespace PetAdopt.Persistence.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
@@ -294,6 +294,9 @@ namespace PetAdopt.Persistence.Migrations
 
                     b.Property<int>("Age")
                         .HasColumnType("int");
+
+                    b.Property<string>("AnimalType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Breed")
                         .IsRequired()
@@ -355,6 +358,38 @@ namespace PetAdopt.Persistence.Migrations
                     b.ToTable("PetImages");
                 });
 
+            modelBuilder.Entity("PetAdopt.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("PetAdopt.Domain.Entities.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -366,6 +401,9 @@ namespace PetAdopt.Persistence.Migrations
                     b.Property<string>("Comment")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PetId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
@@ -379,6 +417,8 @@ namespace PetAdopt.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PetId");
 
                     b.HasIndex("ReviewerId");
 
@@ -498,8 +538,25 @@ namespace PetAdopt.Persistence.Migrations
                     b.Navigation("Pet");
                 });
 
+            modelBuilder.Entity("PetAdopt.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("PetAdopt.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PetAdopt.Domain.Entities.Review", b =>
                 {
+                    b.HasOne("PetAdopt.Domain.Entities.Pet", "Pet")
+                        .WithMany()
+                        .HasForeignKey("PetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PetAdopt.Domain.Entities.ApplicationUser", "Reviewer")
                         .WithMany()
                         .HasForeignKey("ReviewerId")
@@ -511,6 +568,8 @@ namespace PetAdopt.Persistence.Migrations
                         .HasForeignKey("TargetUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Pet");
 
                     b.Navigation("Reviewer");
 

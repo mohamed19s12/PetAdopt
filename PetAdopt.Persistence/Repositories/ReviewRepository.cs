@@ -63,6 +63,11 @@ namespace PetAdopt.Persistence.Repositories
               r.PetId == petId);
         }
 
+        public async Task<List<Review>> GetAllStatsAsync()
+        {
+            return await _context.Reviews.ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

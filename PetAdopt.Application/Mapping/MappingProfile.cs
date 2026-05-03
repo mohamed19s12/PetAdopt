@@ -4,6 +4,7 @@ using PetAdopt.Application.DTOs.Auth;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.DTOs.Review;
 using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace PetAdopt.Application.Mapping
             //registering
             CreateMap<RegisterDto, ApplicationUser>()
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.IsApproved , opt => opt.MapFrom(src => false));
+                .ForMember(dest => dest.Status , opt => opt.MapFrom(src => UserStatus.PendingApproval));
 
             // Adoption //
             CreateMap<AdoptionRequest, AdoptionRequestDto>()

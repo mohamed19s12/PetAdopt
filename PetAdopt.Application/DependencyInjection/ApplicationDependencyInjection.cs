@@ -27,6 +27,7 @@ namespace PetAdopt.Application.DependencyInjection
             services.AddScoped<IAdoptionService, AdoptionService>();
             services.AddScoped<IPetImageService , PetImageService>();
             services.AddScoped<IReviewService, ReviewService>();
+            services.AddScoped<IDashboardService, DashboardService>();
 
             //AutoMapper
             services.AddAutoMapper(typeof(MappingProfile));

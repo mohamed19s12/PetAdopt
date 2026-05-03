@@ -73,5 +73,10 @@ namespace PetAdopt.Persistence.Repositories
                 .Include(a => a.Adopter)
                 .ToListAsync();
         }
+
+        public async Task<List<AdoptionRequest>> GetAllStatsAsync()
+        {
+            return await _context.AdoptionRequests.ToListAsync();
+        }
     }
 }
