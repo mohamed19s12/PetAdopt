@@ -30,5 +30,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
         Task<List<Pet>> GetByOwnerIdAsync(string ownerId);
 
         Task<List<Pet>> GetAllStatsAsync();
+
+        Task DeleteImagesByPetIdAsync(int petId);
     }
 }

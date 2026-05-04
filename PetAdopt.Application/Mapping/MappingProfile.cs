@@ -22,11 +22,15 @@ namespace PetAdopt.Application.Mapping
             // Pet //
             //getting
             CreateMap<Pet, PetDto>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images.Select(i => i.ImageUrl)));
 
             //creating , updating
-            CreateMap<CreatePetDto, Pet>();
-            CreateMap<UpdatePetDto, Pet>();
+            CreateMap<CreatePetDto, Pet>()
+                .ForMember(dest => dest.Images, opt => opt.Ignore());
+
+            CreateMap<UpdatePetDto, Pet>()
+                .ForMember(dest => dest.Images, opt => opt.Ignore());
 
             // Auth //
 

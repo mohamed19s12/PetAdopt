@@ -143,7 +143,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(op =>
+{
+    op.AddPolicy("ApprovedOnly", policy =>
+        policy.RequireClaim("Status", "Approved"));
+});
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

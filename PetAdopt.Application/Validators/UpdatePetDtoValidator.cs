@@ -7,6 +7,7 @@ public class UpdatePetDtoValidator : AbstractValidator<UpdatePetDto>
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Pet name is required")
+            .MinimumLength(2).WithMessage("Name must be at least 2 characters")
             .MaximumLength(50).WithMessage("Name must not exceed 50 characters");
 
         RuleFor(x => x.Age)
@@ -14,8 +15,7 @@ public class UpdatePetDtoValidator : AbstractValidator<UpdatePetDto>
             .LessThan(30).WithMessage("Age must be less than 30");
 
         RuleFor(x => x.Gender)
-            .NotEmpty().WithMessage("Gender is required")
-            .Must(g => g == "Male" || g == "Female")
+            .IsInEnum()
             .WithMessage("Gender must be Male or Female");
 
         RuleFor(x => x.Location)

@@ -36,7 +36,7 @@ namespace PetAdopt.API.Controllers
 
 
         [HttpPost]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Create([FromForm] CreatePetDto dto)
         {
             //Get userId from token
@@ -49,7 +49,7 @@ namespace PetAdopt.API.Controllers
 
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Update(int id, [FromForm] UpdatePetDto dto)
         {
             //Get userId from token
@@ -59,7 +59,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Delete(int id)
         {
             //Get userId from token
@@ -76,7 +76,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpGet("owner/my-pets")]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> GetMyPets()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

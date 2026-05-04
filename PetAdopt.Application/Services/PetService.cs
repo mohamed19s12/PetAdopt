@@ -22,33 +22,56 @@ namespace PetAdopt.Application.Services
         private readonly ILogger<PetService> _logger;
         private readonly IDistributedCache _cache;
         private readonly IMapper _mapper;
+        private readonly IFileService _fileService;
 
 
         private const string PetsCacheKey = "all_pets";
 
-        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger, IDistributedCache cache, IMapper mapper)
+        public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger, IDistributedCache cache, IMapper mapper, IFileService fileService)
         {
             _petRepository = petRepository;
             _notificationService = notificationService;
             _logger = logger;
             _cache = cache;
             _mapper = mapper;
+            _fileService = fileService;
         }
 
         public async Task<int> CreateAsync(CreatePetDto dto, string userId)
         {
-            _logger.LogInformation("Creating pet: {PetName} for Owner: {UserId}", dto.Name, userId);
-            //Mapping CreatePetDto to Pet Entity
+            _logger.LogInformation("Creating pet: {PetName}", dto.Name);
+
             var pet = _mapper.Map<Pet>(dto);
+
             pet.OwnerId = userId;
             pet.Status = PetStatus.Pending;
+            pet.Images = new List<PetImage>();
 
             await _petRepository.AddAsync(pet);
             await _petRepository.SaveChangesAsync();
 
-            _logger.LogInformation("Pet created: {PetName} with Id: {PetId}", pet.Name, pet.Id);
+            // Upload Images
+            if (dto.Images?.Any() == true)
+            {
+                foreach (var file in dto.Images)
+                {
+                    var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+
+                    using var stream = file.OpenReadStream();
+                    var url = await _fileService.UploadFileAsync(stream, fileName);
+
+                    pet.Images.Add(new PetImage
+                    {
+                        PetId = pet.Id,
+                        ImageUrl = url
+                    });
+                }
+
+                await _petRepository.SaveChangesAsync();
+            }
 
             await InvalidateCacheAsync();
+
             return pet.Id;
         }
 
@@ -86,7 +109,12 @@ namespace PetAdopt.Application.Services
             if (cachedData != null)
             {
                 _logger.LogInformation("Returning pets from Redis cache");
-                return JsonSerializer.Deserialize<List<PetDto>>(cachedData);
+                return JsonSerializer.Deserialize<List<PetDto>>(
+                    cachedData,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    })!;
             }
 
             _logger.LogInformation("Retrieving all pets");
@@ -113,7 +141,12 @@ namespace PetAdopt.Application.Services
             if (cachedData != null)
             {
                 _logger.LogInformation("Returning pet {PetId} from Redis cache", petId);
-                return JsonSerializer.Deserialize<PetDto>(cachedData);
+                return JsonSerializer.Deserialize<PetDto>(
+                    cachedData,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    })!;
             }
 
             _logger.LogInformation("Retrieving pet by Id: {PetId}", petId);
@@ -155,6 +188,32 @@ namespace PetAdopt.Application.Services
 
             // Update the pet properties
             _mapper.Map(dto, pet);
+
+            //delete old pic
+            await _petRepository.DeleteImagesByPetIdAsync(petId);
+            await _petRepository.SaveChangesAsync();
+            
+            pet.Images = new List<PetImage>();
+
+            //Images Hanle
+            if (dto.NewImages != null && dto.NewImages.Any())
+            {
+                pet.Images ??= new List<PetImage>();
+
+                foreach (var file in dto.NewImages)
+                {
+                    var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+
+                    using var stream = file.OpenReadStream();
+                    var url = await _fileService.UploadFileAsync(stream, fileName);
+
+                    pet.Images.Add(new PetImage
+                    {
+                        PetId = pet.Id,
+                        ImageUrl = url
+                    });
+                }
+            }
 
             await _petRepository.UpdateAsync(pet);
             await _petRepository.SaveChangesAsync();

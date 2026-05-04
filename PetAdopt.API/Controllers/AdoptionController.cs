@@ -21,7 +21,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpPost("request-pet-for-adoption/{petId}")]
-        [Authorize(Roles = "Adopter")]
+        [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Apply(int petId)
         {
             //get the user from the token
@@ -35,7 +35,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpPut("Accept-adoption-request/{requestId}")]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Accept(int requestId)
         {
             await _adoptionService.Acceept(requestId);
@@ -43,7 +43,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpPut("Reject-adoption-request/{requestId}")]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Reject(int requestId)
         {
             await _adoptionService.Reject(requestId);
@@ -51,7 +51,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpGet("adopter-requests")]
-        [Authorize(Roles = "Adopter")]
+        [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
         public async Task<IActionResult> GetMyRequests([FromQuery] RequestStatus? status)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -61,7 +61,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpGet("owner-requests")]
-        [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> GetOwnerRequests()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -69,7 +69,7 @@ namespace PetAdopt.API.Controllers
             var result = await _adoptionService.GetOwnerRequestsAsync(userId);
             return Ok(ApiResponse<List<AdoptionRequestDto>>.Success(result));
         }
-
+        
         [HttpGet("all-requests")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllRequests()

@@ -10,7 +10,7 @@ namespace PetAdopt.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Adopter")]
+    [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
     public class FavoritesController : ControllerBase
     {
         private readonly IFavoriteService _favoriteService;

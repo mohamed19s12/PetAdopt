@@ -8,6 +8,7 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PetAdoptDb;User Id=sa;Password=Your@Password123;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=True"
       JWT__Key: "JF;L f;LF jo;pfjJ 946&$ *Q3 U74 fef*pru#*&yc yr#*&c"
       JWT__Issuer: "PetAdopt"

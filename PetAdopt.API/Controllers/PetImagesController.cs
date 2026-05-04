@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PetAdopt.Application.DTOs;
 using PetAdopt.Application.Interfaces.Services;
@@ -19,6 +20,7 @@ namespace PetAdopt.API.Controllers
 
 
         [HttpPost("{petId}")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> UploadImage(int petId, List<IFormFile> files)
         {
             //if (file == null || file.Length == 0)

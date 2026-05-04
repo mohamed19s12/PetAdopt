@@ -31,7 +31,8 @@ namespace PetAdopt.Infrastructure.Services
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.FullName)
+            new Claim(ClaimTypes.Name, user.FullName),
+            new Claim("Status", user.Status.ToString())
         };
 
             // Add user roles as claims

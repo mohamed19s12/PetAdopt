@@ -101,16 +101,7 @@ namespace PetAdopt.Infrastructure.Services
                 _logger.LogWarning("Invalid login attempt for email: {Email}", dto.Email);
                 throw new Exception("Invalid email or password");
             }
-            if (user.Status != UserStatus.Approved)
-            {
-                _logger.LogWarning("Login attempt for unapproved account: {Email}", dto.Email);
-                return new AuthResponseDto
-                {
-                    Email = user.Email,
-                    Token = null,
-                    Status = user.Status
-                };
-            }
+
             //if (!user.EmailConfirmed)
             //    throw new Exception("Please confirm your email first.");
             await IssueTokensAsync(user, response);
@@ -290,16 +281,16 @@ namespace PetAdopt.Infrastructure.Services
             response.Cookies.Append("jwt", accessToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
                 Expires = DateTime.UtcNow.AddMinutes(accessTokenLifetimeMinutes)
             });
 
             response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
+                Secure = false,
+                SameSite = SameSiteMode.Lax,
                 Expires = refreshTokenExpiry
             });
         }

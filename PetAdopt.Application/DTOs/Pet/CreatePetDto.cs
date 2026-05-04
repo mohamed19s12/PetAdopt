@@ -1,4 +1,5 @@
-﻿using PetAdopt.Domain.Enums;
+﻿using Microsoft.AspNetCore.Http;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace PetAdopt.Application.DTOs.Pet
         public string HealthStatus { get; set; }
         public string Description { get; set; }
         public string Location { get; set; }
+
+        public List<IFormFile> Images { get; set; } = new();
 
     }
 }

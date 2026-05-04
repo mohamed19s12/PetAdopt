@@ -20,7 +20,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Adopter")]
+        [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
         public async Task<IActionResult> AddReview([FromForm] CreateReviewDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -38,7 +38,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Adopter")]
+        [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
         public async Task<IActionResult> UpdateReview(int id, [FromForm] UpdateReviewDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -49,7 +49,7 @@ namespace PetAdopt.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Adopter")]
+        [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
         public async Task<IActionResult> DeleteReview(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

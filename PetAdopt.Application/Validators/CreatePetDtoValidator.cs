@@ -20,7 +20,8 @@ namespace PetAdopt.Application.Validators
                 .NotEmpty().WithMessage("Breed is required");
 
             RuleFor(x => x.Gender)
-                .NotEmpty().WithMessage("Gender is required");
+                .IsInEnum()
+                .WithMessage("Gender must be Male or Female");
 
             RuleFor(x => x.Location)
                 .NotEmpty().WithMessage("Location is required");
