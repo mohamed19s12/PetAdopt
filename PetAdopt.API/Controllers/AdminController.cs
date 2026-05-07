@@ -91,7 +91,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(result, "Fetched all owners successfully"));
         }
 
-        [HttpPut("approve/{userId}")]
+        [HttpPut("users/{userId}/approve")]
         public async Task<IActionResult> ApproveUser(string userId)
         {
             // Find the user by ID
@@ -114,7 +114,7 @@ namespace PetAdopt.API.Controllers
         }
 
 
-        [HttpPut("reject/{userId}")]
+        [HttpPut("users/{userId}/reject")]
         public async Task<IActionResult> RejectUser(string userId)
         {
             // Find the user by ID
@@ -140,22 +140,28 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "User rejected successfully"));
         }
 
-        [HttpGet("pending-pets")]
-        public async Task<IActionResult> GetPendingPets()
+        //[HttpGet("pets/pending")]
+        //public async Task<IActionResult> GetPendingPets()
+        //{
+        //    var result = await _petService.GetPendingAsync();
+        //    return Ok(ApiResponse<List<PetDto>>.Success(result));
+        //}
+
+        [HttpGet("pets")]
+        public async Task<IActionResult> GetPets([FromQuery] PostsApprovalStatus? poststatus , PetStatusForAdoption? adoptstat)
         {
-            var result = await _petService.GetPendingAsync();
+            var result = await _petService.GetPetsAsync(poststatus, adoptstat);
             return Ok(ApiResponse<List<PetDto>>.Success(result));
         }
 
-
-        [HttpPut("approve-pet/{petId}")]
+        [HttpPut("pets/{petId}/approve")]
         public async Task<IActionResult> ApprovePet(int petId)
         {
             await _petService.ApproveAsync(petId);
             return Ok(ApiResponse<object>.Success(null, "Pet approved successfully"));
         }
 
-        [HttpPut("reject-pet/{petId}")]
+        [HttpPut("pets/{petId}/reject")]
         public async Task<IActionResult> RejectPet(int petId)
         {
             await _petService.RejectAsync(petId);

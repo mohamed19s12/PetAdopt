@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Domain.Entities;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,22 +10,22 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Interfaces.Repositories
 {
-    public interface IPetRepository
+    public interface IPetRepository : IGenericRepository<Pet>
     {
-        Task AddAsync(Pet pet);
+        //Task AddAsync(Pet pet);
         Task<List<Pet>> GetAllAsync();
         Task<Pet> GetByIdAsync(int id);
 
-        Task UpdateAsync(Pet pet);
+        //Task UpdateAsync(Pet pet);
         Task DeleteAsync(int id);
 
-        Task SaveChangesAsync();
+        //Task SaveChangesAsync();
 
         // Filtering and Searching
         Task<(List<Pet> Pets, int totalCount)> SearchAsync(PetFilterDto filter);
 
-        //Getiing Pending Pets For Admin Panel
-        Task<List<Pet>> GetPendingAsync();
+        //Getting Pets For Admin Panel
+        Task<List<Pet>> GetPetsAsync(PostsApprovalStatus? status , PetStatusForAdoption? adoptstatus);
 
         //Get Owner pets for each user
         Task<List<Pet>> GetByOwnerIdAsync(string ownerId);

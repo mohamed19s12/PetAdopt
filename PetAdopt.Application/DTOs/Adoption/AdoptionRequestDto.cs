@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PetAdopt.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,9 +12,13 @@ namespace PetAdopt.Application.DTOs.Adoption
         public int Id { get; set; }
         public int PetId { get; set; }
         public string PetName { get; set; }
+
         public string AdopterName { get; set; }
         public string OwnerName { get; set; }
-        public string Status { get; set; }
+
+        public string RequestStatus { get; set; }
+        public string PetStatusForAdoption { get; set; }
+
         public DateTime RequestedAt { get; set; }
     }
 }

@@ -30,10 +30,26 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "Review added successfully"));
         }
 
-        [HttpGet("{targetUserId}")]
-        public async Task<IActionResult> GetReviews(string targetUserId)
+
+        [HttpGet("my-reviews")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
+        public async Task<IActionResult> GetReviewsForOwnerAsync()
         {
-            var result = await _reviewService.GetReviewsAsync(targetUserId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var result = await _reviewService.GetReviewsForOwnerAsync(userId);
+            return Ok(ApiResponse<List<ReviewDto>>.Success(result));
+        }
+
+        [HttpGet("i-made")]
+        [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
+        public async Task<IActionResult> GetMyReviews()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var result = await _reviewService.GetReviewsForAdopterAsync(userId);
             return Ok(ApiResponse<List<ReviewDto>>.Success(result));
         }
 
@@ -57,6 +73,14 @@ namespace PetAdopt.API.Controllers
 
             await _reviewService.DeleteReviewAsync(userId, id);
             return Ok(ApiResponse<object>.Success(null, "Review deleted successfully"));
+        }
+
+        [HttpGet("pet/{petId}")]
+        public async Task<IActionResult> GetReviewByPet(int petId)
+        {
+            var result = await _reviewService.GetReviewByPetIdAsync(petId);
+
+            return Ok(ApiResponse<ReviewDto>.Success(result));
         }
 
 

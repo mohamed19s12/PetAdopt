@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PetAdopt.Application.DTOs;
+using PetAdopt.Application.DTOs.Favorite;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Services;
 using System.Security.Claims;
@@ -51,7 +52,7 @@ namespace PetAdopt.API.Controllers
             if (userId == null)
                 return Unauthorized();
             var result = await _favoriteService.GetUserFavorites(userId);
-            return Ok(ApiResponse<List<PetDto>>.Success(result));
+            return Ok(ApiResponse<List<PetWithFavoriteDto>>.Success(result));
         }
     }
 }

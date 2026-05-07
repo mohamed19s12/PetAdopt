@@ -20,5 +20,7 @@ namespace PetAdopt.Application.DTOs.Pet
 
         public List<IFormFile> Images { get; set; } = new();
 
+
+
     }
 }

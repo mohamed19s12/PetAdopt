@@ -22,8 +22,16 @@ namespace PetAdopt.Application.Mapping
             // Pet //
             //getting
             CreateMap<Pet, PetDto>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images.Select(i => i.ImageUrl)));
+               .ForMember(dest => dest.PetStatusForAdoption, opt => opt.MapFrom(src => src.petStatusForAdoption.ToString()))
+               .ForMember(dest => dest.PostsApprovalStatus, opt => opt.MapFrom(src => src.postsApprovalStatus.ToString()))
+               .ForMember(dest => dest.Images, opt => opt.MapFrom(src =>
+                     src.Images != null ? src.Images.Select(i => i.ImageUrl).ToList() : new List<string>()))
+               .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src =>
+                     src.Owner != null ? src.Owner.FullName : ""))
+               .ForMember(dest => dest.OwnerRating, opt => opt.MapFrom(src =>
+                     src.Owner != null && src.Owner.ReviewsReceived != null && src.Owner.ReviewsReceived.Any()
+                         ? Math.Round(src.Owner.ReviewsReceived.Average(r => (double)r.Rating), 1)
+                         : 0.0));
 
             //creating , updating
             CreateMap<CreatePetDto, Pet>()
@@ -44,12 +52,15 @@ namespace PetAdopt.Application.Mapping
                 .ForMember(dest => dest.PetName, opt => opt.MapFrom(src => src.Pet.Name))
                     .ForMember(dest => dest.AdopterName, opt => opt.MapFrom(src => src.Adopter.FullName))  
                     .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => src.Pet.Owner.FullName))
-                .ForMember(dest => dest.Status,  opt => opt.MapFrom(src => src.Status.ToString()));
+                .ForMember(dest => dest.RequestStatus,  opt => opt.MapFrom(src => src.RequestStatus.ToString()))
+                .ForMember(dest => dest.PetStatusForAdoption,  opt => opt.MapFrom(src => src.PetStatusForAdoption.ToString()));
 
             // Review Mappings //
             CreateMap<Review, ReviewDto>()
                 .ForMember(dest => dest.ReviewerName,
                     opt => opt.MapFrom(src => src.Reviewer.FullName));
+
+            CreateMap<CreateReviewDto, Review>();
 
             // Favorite Mappings //
             CreateMap<Favorite, PetDto>()
@@ -61,10 +72,29 @@ namespace PetAdopt.Application.Mapping
                     opt => opt.MapFrom(src => src.Pet.Breed))
                 .ForMember(dest => dest.Location,
                     opt => opt.MapFrom(src => src.Pet.Location))
-                .ForMember(dest => dest.Status,
-                    opt => opt.MapFrom(src => src.Pet.Status.ToString()));
+                .ForMember(dest => dest.RequestStatus,
+                    opt => opt.MapFrom(src => src.Pet.requestStatus.ToString()));
 
-            // Pet Image //
+            //// Favorite //
+            //CreateMap<Favorite, PetDto>()
+            //    .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Pet.Id))
+            //    .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Pet.Name))
+            //    .ForMember(dest => dest.Breed, opt => opt.MapFrom(src => src.Pet.Breed))
+            //    .ForMember(dest => dest.Gender, opt => opt.MapFrom(src => src.Pet.Gender))
+            //    .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Pet.Description))
+            //    .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Pet.Location))
+            //    .ForMember(dest => dest.HealthStatus, opt => opt.MapFrom(src => src.Pet.HealthStatus))
+            //    .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.Pet.Age))
+            //    .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Pet.Images.Select(i => i.ImageUrl)))
+            //    .ForMember(dest => dest.PetStatusForAdoption, opt => opt.MapFrom(src => src.Pet.petStatusForAdoption.ToString()))
+            //    .ForMember(dest => dest.PostsApprovalStatus, opt => opt.MapFrom(src => src.Pet.postsApprovalStatus.ToString()))
+            //    .ForMember(dest => dest.RequestStatus, opt => opt.MapFrom(src => src.Pet.requestStatus.ToString()))
+            //    .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => src.Pet.Owner.FullName))
+            //    .ForMember(dest => dest.OwnerRating, opt => opt.MapFrom(src =>
+            //        src.Pet.Owner.ReviewsReceived.Any()
+            //            ? src.Pet.Owner.ReviewsReceived.Average(r => r.Rating)
+            //            : 0
+            //    ));
         }
     }
 }

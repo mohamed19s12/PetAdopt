@@ -36,23 +36,30 @@ namespace PetAdopt.Application.Services
             var owners = await _userManager.GetUsersInRoleAsync("Owner");
             var adopters = await _userManager.GetUsersInRoleAsync("Adopter");
             var allPets = await _petRepository.GetAllStatsAsync();
-            var allRequests = await _adoptionRepository.GetAllStatsAsync();
-            var allReviews = await _reviewRepository.GetAllStatsAsync();
+            var allRequests = await _adoptionRepository.GetAllAsync();
+            var allReviews = await _reviewRepository.GetAllAsync();
 
             return new DashboardDto
             {
                 // Pets
                 TotalPets = allPets.Count,
-                PendingPets = allPets.Count(p => p.Status == PetStatus.Pending),
-                ApprovedPets = allPets.Count(p => p.Status == PetStatus.Approved),
-                RejectedPets = allPets.Count(p => p.Status == PetStatus.Rejected),
-                AdoptedPets = allPets.Count(p => p.Status == PetStatus.Adopted),
+                PendingPets = allPets.Count(p => p.postsApprovalStatus == PostsApprovalStatus.Pending),
+                ApprovedPets = allPets.Count(p => p.postsApprovalStatus == PostsApprovalStatus.Approved),
+                RejectedPets = allPets.Count(p => p.postsApprovalStatus == PostsApprovalStatus.Rejected),
+                
+                PetsAvailableForAdoption = allPets.Count(p => p.petStatusForAdoption == PetStatusForAdoption.Available),
+                PetsAreRequested = allPets.Count(p => p.petStatusForAdoption == PetStatusForAdoption.Requested),    
+                PetsAreAdopted = allPets.Count(p => p.petStatusForAdoption == PetStatusForAdoption.Adopted),
 
                 // Adoptions
                 TotalAdoptionRequests = allRequests.Count,
-                PendingAdoptionRequests = allRequests.Count(a => a.Status == RequestStatus.Pending),
-                ApprovedAdoptionRequests = allRequests.Count(a => a.Status == RequestStatus.Approved),
-                RejectedAdoptionRequests = allRequests.Count(a => a.Status == RequestStatus.Rejected),
+                PendingAdoptionRequests = allRequests.Count(a => a.RequestStatus == RequestStatus.Pending),
+                ApprovedAdoptionRequests = allRequests.Count(a => a.RequestStatus == RequestStatus.Approved),
+                RejectedAdoptionRequests = allRequests.Count(a => a.RequestStatus == RequestStatus.Rejected),
+
+
+
+
 
                 // Users
                 TotalUsers = owners.Count + adopters.Count,

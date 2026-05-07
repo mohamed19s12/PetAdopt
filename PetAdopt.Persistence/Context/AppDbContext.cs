@@ -38,7 +38,7 @@ namespace PetAdopt.Persistence.Context
 
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.TargetUser)
-                .WithMany()
+                .WithMany(u => u.ReviewsReceived)
                 .HasForeignKey(r => r.TargetUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 

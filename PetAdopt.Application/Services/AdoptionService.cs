@@ -36,29 +36,41 @@ namespace PetAdopt.Application.Services
         {
             //First we need to get the request by id
             _logger.LogInformation("Accepting adoption request: {RequestId}", requestId);
-            var request =await _AdoptionRepo.GetByIdAsync(requestId);
 
+            var request =await _AdoptionRepo.GetByIdAsync(requestId);
             if (request == null)
             {
                 _logger.LogWarning("Adoption request not found: {RequestId}", requestId);
                 throw new Exception("Adoption request not found");
             }
-            //if the request approved cannot accept again
-            if (request.Status == RequestStatus.Approved)
+            var pet = request.Pet;
+
+            //if the request has ( approved Or rejected )cannot accept again
+            if (request.RequestStatus == RequestStatus.Approved)
             {
                 _logger.LogWarning("Adoption request already approved: {RequestId}", requestId);
                 throw new InvalidOperationException("Adoption request is already approved");
             }
-            if (request.Status == RequestStatus.Rejected)
+            if (request.RequestStatus == RequestStatus.Rejected)
             {
                 _logger.LogWarning("Cannot accept rejected request: {RequestId}", requestId);
                 throw new InvalidOperationException("Cannot accept a rejected request, adopter must apply again");
             }
 
+            //if pet is adopted allready
+            if (request.Pet.petStatusForAdoption == PetStatusForAdoption.Adopted)
+            {
+                _logger.LogWarning("Pet is already adopted: {RequestId}", requestId);
+                throw new InvalidOperationException("Pet is already adopted");
+            }
+
             //make Rquest Approved
-            request.Status = RequestStatus.Approved;
+            request.RequestStatus = RequestStatus.Approved;
+
             //then make the pet adopted
-            request.Pet.Status = PetStatus.Adopted;
+            pet.petStatusForAdoption = PetStatusForAdoption.Adopted;
+            pet.requestStatus = RequestStatus.Approved;
+
             await _AdoptionRepo.SaveChangesAsync();
 
 
@@ -79,21 +91,42 @@ namespace PetAdopt.Application.Services
                 _logger.LogWarning("Pet not found: {PetId}", petId);
                 throw new KeyNotFoundException("Pet not found");
             }
+
             //Check if the pet is available for adoption
-            if (pet.Status != PetStatus.Approved)
+            if (pet.petStatusForAdoption != PetStatusForAdoption.Available)
             {
                 _logger.LogWarning("Pet is not available for adoption: {PetId}", petId);
                 throw new InvalidOperationException("Pet is not available for adoption");
+            }
+
+            //Check if the user has already applied for this pet ..........pervent duplicates
+            var existingRequest = await _AdoptionRepo.GetActiveRequest(userId, petId);
+
+            if (existingRequest != null)
+            {
+                _logger.LogWarning("User {UserId} already applied for pet {PetId}", userId, petId);
+                throw new InvalidOperationException("You already applied for this pet");
             }
 
             var request = new AdoptionRequest
             {
                 PetId = petId,
                 AdoprerId = userId,
+                RequestStatus = RequestStatus.Pending
             };
+            //update pet status
+            pet.petStatusForAdoption = PetStatusForAdoption.Requested;
+            pet.requestStatus = RequestStatus.Pending;
+
 
             await _AdoptionRepo.AddAsync(request);
+
             await _AdoptionRepo.SaveChangesAsync();
+
+            //test
+            _logger.LogInformation(
+    "PET STATUS: {status}",
+    pet.petStatusForAdoption);
 
             _logger.LogInformation("Adoption request created for Pet: {PetName} by User: {UserId}",
             pet.Name, userId);
@@ -107,19 +140,32 @@ namespace PetAdopt.Application.Services
         public async Task Reject(int requestId)
         {
             _logger.LogInformation("Rejecting adoption request: {RequestId}", requestId);
-            var request =await _AdoptionRepo.GetByIdAsync(requestId);
 
+            var request =await _AdoptionRepo.GetByIdAsync(requestId);
             if (request == null)
             {
                 _logger.LogWarning("Adoption request not found: {RequestId}", requestId);
                 throw new Exception("Adoption request not found");
             }
-            if (request.Status == RequestStatus.Approved)
+
+            // Cannot reject approved request
+            if (request.RequestStatus == RequestStatus.Approved)
             {
-                _logger.LogWarning("Cannot reject approved request: {RequestId}", requestId);
-                throw new InvalidOperationException("Cannot reject an already approved request");
+                throw new InvalidOperationException("Cannot reject approved request");
             }
-            await _AdoptionRepo.DeleteAsync(request);
+            // Already rejected
+            if (request.RequestStatus == RequestStatus.Rejected)
+            {
+                throw new InvalidOperationException("Request already rejected");
+            }
+
+            // Reject request
+            request.RequestStatus = RequestStatus.Rejected;
+
+            // Return pet to available
+            request.Pet.petStatusForAdoption = PetStatusForAdoption.Available;
+            request.Pet.requestStatus = RequestStatus.Pending;
+
             await _AdoptionRepo.SaveChangesAsync();
 
             _logger.LogInformation("Adoption request rejected: {RequestId}", requestId);

@@ -22,7 +22,10 @@ namespace PetAdopt.Domain.Entities
         public string OwnerId { get; set; }
         public ApplicationUser Owner { get; set; }
 
-        public PetStatus Status { get; set; } = PetStatus.Pending;
+
+        public PostsApprovalStatus postsApprovalStatus { get; set; } = PostsApprovalStatus.Pending;
+        public PetStatusForAdoption petStatusForAdoption { get; set; } = PetStatusForAdoption.Available;
+        public RequestStatus requestStatus { get; set; } = RequestStatus.NoRequest;
 
         //Animal type for Searching and Filtering
         public string? AnimalType { get; set; }

@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Interfaces.Repositories
 {
-    public interface IAdoptionRequestRepository
+    public interface IAdoptionRequestRepository : IGenericRepository<AdoptionRequest>
     {
         // Adding a new adoption request to the database
-        Task AddAsync(AdoptionRequest request);
+        //Task AddAsync(AdoptionRequest request);
 
         //Getting all adoption requests for a specific owner by their ID
         Task<List<AdoptionRequest>> GetByOwnerIdAsync(string ownerId);
@@ -21,15 +21,18 @@ namespace PetAdopt.Application.Interfaces.Repositories
 
         Task<List<AdoptionRequest>> GetByAdopterIdAsync(string AdopterId , RequestStatus? status = null);
 
+        //to elemenate the problem of multiple requests for the same pet from the same adopter
+        Task<AdoptionRequest?> GetActiveRequest(string adopterId, int petId);
+
         //Saving changes to the database
-        Task SaveChangesAsync();
+        //Task SaveChangesAsync();
 
         //delete request if it rejected from the owner 
-        Task DeleteAsync(AdoptionRequest request);
+        //Task DeleteAsync(AdoptionRequest request);
 
         //for admin
         Task<List<AdoptionRequest>> GetAllRequestsAsync();
 
-        Task<List<AdoptionRequest>> GetAllStatsAsync();
+        //Task<List<AdoptionRequest>> GetAllStatsAsync();
     }
 }

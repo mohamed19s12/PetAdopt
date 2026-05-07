@@ -12,5 +12,8 @@ namespace PetAdopt.Domain.Entities
     {
         public string FullName { get; set; }
         public UserStatus Status { get; set; } = UserStatus.PendingApproval;
+
+        // Navigation Properties
+        public ICollection<Review> ReviewsReceived { get; set; }
     }
 }

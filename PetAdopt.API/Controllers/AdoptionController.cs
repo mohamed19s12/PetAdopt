@@ -20,7 +20,7 @@ namespace PetAdopt.API.Controllers
             _adoptionService = adoptionService;
         }
 
-        [HttpPost("request-pet-for-adoption/{petId}")]
+        [HttpPost("{petId}/requests")]
         [Authorize(Roles = "Adopter", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Apply(int petId)
         {
@@ -34,7 +34,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "Adoption request submitted successfully"));
         }
 
-        [HttpPut("Accept-adoption-request/{requestId}")]
+        [HttpPut("requests/{requestId}/approve")]
         [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Accept(int requestId)
         {
@@ -42,7 +42,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "Adoption request accepted"));
         }
 
-        [HttpPut("Reject-adoption-request/{requestId}")]
+        [HttpPut("requests/{requestId}/reject")]
         [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
         public async Task<IActionResult> Reject(int requestId)
         {

@@ -36,10 +36,10 @@ namespace PetAdopt.Persistence.DependencyInjection
                 .AddDefaultTokenProviders();
 
             // Register repositories
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IPetRepository, PetRepository>();
             services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IAdoptionRequestRepository, AdoptionRequestRepository>();
-            services.AddScoped<IPetImageRepository, PetImageRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
 

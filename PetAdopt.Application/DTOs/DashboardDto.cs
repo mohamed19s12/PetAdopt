@@ -15,6 +15,10 @@ namespace PetAdopt.Application.DTOs
         public int RejectedPets { get; set; }
         public int AdoptedPets { get; set; }
 
+        public int PetsAvailableForAdoption { get; set; }
+        public int PetsAreRequested { get; set; }
+        public int PetsAreAdopted { get; set; }
+
         // Adoption Stats
         public int TotalAdoptionRequests { get; set; }
         public int PendingAdoptionRequests { get; set; }

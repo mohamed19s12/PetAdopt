@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using PetAdopt.Application.DTOs.Favorite;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
@@ -54,30 +55,33 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Pet: {PetId} added to favorites for user: {UserId} , cache invalidated", petId, userId);
         }
 
-        public async Task<List<PetDto>> GetUserFavorites(string userId)
+        public async Task<List<PetWithFavoriteDto>> GetUserFavorites(string userId)
         {
             var cacheKey = $"favorites_{userId}";
 
+            // 1. Cache
             var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (cachedData != null)
+            if (!string.IsNullOrEmpty(cachedData))
             {
                 _logger.LogInformation("Returning favorites for User {UserId} from Redis", userId);
-                return JsonSerializer.Deserialize<List<PetDto>>(cachedData);
+                return JsonSerializer.Deserialize<List<PetWithFavoriteDto>>(cachedData)!;
             }
 
             _logger.LogInformation("Retrieving favorites for user: {UserId}", userId);
-            var favorites = await _favoriteRepository.GetByUserFavoritesAsync(userId);
 
-            //f => Each Favorite that i Take Pet from it
-            var result = favorites.Select(p => _mapper.Map<PetDto>(p)).ToList();
+            // 2. Repo already returns DTO (no mapping here)
+            var result = await _favoriteRepository.GetAllPetsWithFavoriteAsync(userId);
 
-            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-            });
+            // 3. Cache
+            await _cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(result),
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                });
 
             return result;
-
         }
 
         public async Task RemoveFromFavorites(string userId, int petId)
@@ -93,7 +97,7 @@ namespace PetAdopt.Application.Services
             }
 
             //remove it if exists and save changes
-            await _favoriteRepository.RemoveAsync(favorite);
+            await _favoriteRepository.DeleteAsync(favorite);
             await _favoriteRepository.SaveChangesAsync();
 
             await _cache.RemoveAsync($"favorites_{userId}");

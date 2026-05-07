@@ -170,11 +170,14 @@ namespace PetAdopt.Persistence.Migrations
                     b.Property<int>("PetId")
                         .HasColumnType("int");
 
+                    b.Property<int>("PetStatusForAdoption")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestStatus")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -265,6 +268,9 @@ namespace PetAdopt.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("bit");
+
                     b.Property<int>("PetId")
                         .HasColumnType("int");
 
@@ -323,7 +329,13 @@ namespace PetAdopt.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("Status")
+                    b.Property<int>("petStatusForAdoption")
+                        .HasColumnType("int");
+
+                    b.Property<int>("postsApprovalStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("requestStatus")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -410,7 +422,6 @@ namespace PetAdopt.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("TargetUserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -561,16 +572,20 @@ namespace PetAdopt.Persistence.Migrations
                         .IsRequired();
 
                     b.HasOne("PetAdopt.Domain.Entities.ApplicationUser", "TargetUser")
-                        .WithMany()
+                        .WithMany("ReviewsReceived")
                         .HasForeignKey("TargetUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Pet");
 
                     b.Navigation("Reviewer");
 
                     b.Navigation("TargetUser");
+                });
+
+            modelBuilder.Entity("PetAdopt.Domain.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("ReviewsReceived");
                 });
 
             modelBuilder.Entity("PetAdopt.Domain.Entities.Pet", b =>

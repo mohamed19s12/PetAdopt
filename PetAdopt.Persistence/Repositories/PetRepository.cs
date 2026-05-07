@@ -7,22 +7,10 @@ using PetAdopt.Persistence.Context;
 
 namespace PetAdopt.Persistence.Repositories
 {
-    public class PetRepository : IPetRepository
+    public class PetRepository : GenericRepository<Pet>, IPetRepository
     {
-        private readonly AppDbContext _context;
 
-        public PetRepository(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        // -------------------------
-        // CREATE
-        // -------------------------
-        public async Task AddAsync(Pet pet)
-        {
-            await _context.Pets.AddAsync(pet);
-        }
+        public PetRepository(AppDbContext context) : base(context) { }
 
         // -------------------------
         // DELETE (FIXED)
@@ -53,8 +41,9 @@ namespace PetAdopt.Persistence.Repositories
         {
             return await _context.Pets
                 .Include(p => p.Images)
-                .Where(p => p.Status == PetStatus.Approved
-                         || p.Status == PetStatus.Adopted)
+                .Include(p => p.Owner)                    
+                    .ThenInclude(o => o.ReviewsReceived)
+                .Where(p => p.postsApprovalStatus == PostsApprovalStatus.Approved)
                 .ToListAsync();
         }
 
@@ -64,19 +53,49 @@ namespace PetAdopt.Persistence.Repositories
         public async Task<Pet?> GetByIdAsync(int id)
         {
             return await _context.Pets
+                .Include(p => p.Owner)
+                    .ThenInclude(o => o.ReviewsReceived)
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         // -------------------------
-        // GET PENDING
+        // GET PENDING (For Admin)
         // -------------------------
-        public async Task<List<Pet>> GetPendingAsync()
+        //public async Task<List<Pet>> GetPendingAsync()
+        //{
+        //    return await _context.Pets
+        //        .Include(p => p.Images)
+        //        .Include(p => p.Owner)
+        //            .ThenInclude(o => o.ReviewsReceived)
+        //        .Where(p => p.postsApprovalStatus == PostsApprovalStatus.Pending)
+        //        .ToListAsync();
+        //}
+
+        // -------------------------
+        // Get Pets (For Admin)
+        // -------------------------
+        public async Task<List<Pet>> GetPetsAsync(PostsApprovalStatus? status,PetStatusForAdoption? adoptstatus)
         {
-            return await _context.Pets
+            var query = _context.Pets
                 .Include(p => p.Images)
-                .Where(p => p.Status == PetStatus.Pending)
-                .ToListAsync();
+                .Include(p => p.Owner)
+                    .ThenInclude(o => o.ReviewsReceived)
+                .AsQueryable();
+
+            // Filter by post approval status
+            if (status.HasValue)
+            {
+                query = query.Where(p => p.postsApprovalStatus == status.Value);
+            }
+
+            // Filter by adoption status
+            if (adoptstatus.HasValue)
+            {
+                query = query.Where(p => p.petStatusForAdoption == adoptstatus.Value);
+            }
+
+            return await query.ToListAsync();
         }
 
         // -------------------------
@@ -86,6 +105,8 @@ namespace PetAdopt.Persistence.Repositories
         {
             return await _context.Pets
                 .Include(p => p.Images)
+                .Include(p => p.Owner)
+                    .ThenInclude(o => o.ReviewsReceived)
                 .Where(p => p.OwnerId == ownerId)
                 .ToListAsync();
         }
@@ -93,19 +114,10 @@ namespace PetAdopt.Persistence.Repositories
         // -------------------------
         // UPDATE
         // -------------------------
-        public Task UpdateAsync(Pet pet)
-        {
-            _context.Pets.Update(pet);
-            return Task.CompletedTask;
-        }
 
         // -------------------------
         // SAVE
         // -------------------------
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
 
         // -------------------------
         // SEARCH (FIXED & CLEAN)
@@ -113,9 +125,10 @@ namespace PetAdopt.Persistence.Repositories
         public async Task<(List<Pet> Pets, int totalCount)> SearchAsync(PetFilterDto filter)
         {
             var query = _context.Pets
+                .Include(p => p.Owner)
+                    .ThenInclude(o => o.ReviewsReceived)
                 .Include(p => p.Images)
-                .Where(p => p.Status == PetStatus.Approved
-                         || p.Status == PetStatus.Adopted)
+                .Where(p => p.postsApprovalStatus == PostsApprovalStatus.Approved)
                 .AsQueryable();
 
             // SEARCH
@@ -164,6 +177,8 @@ namespace PetAdopt.Persistence.Repositories
         {
             return await _context.Pets
                 .Include(p => p.Images)
+                .Include(p => p.Owner)
+                    .ThenInclude(o => o.ReviewsReceived)
                 .ToListAsync();
         }
 

@@ -16,8 +16,8 @@ namespace PetAdopt.Domain.Entities
         public string AdoprerId { get; set; }
         public ApplicationUser Adopter { get; set; }
 
-        public RequestStatus Status { get; set; } = RequestStatus.Pending;
-
+        public RequestStatus RequestStatus { get; set; } = RequestStatus.Pending;
+        public PetStatusForAdoption PetStatusForAdoption { get; set; } = PetStatusForAdoption.Available;
 
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     }

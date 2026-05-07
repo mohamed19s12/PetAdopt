@@ -1,4 +1,5 @@
 ﻿using PetAdopt.Application.DTOs.Pet;
+using PetAdopt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,7 @@ namespace PetAdopt.Application.Interfaces.Services
         //Rejecting Pets From The Admin Panel
         Task RejectAsync(int petId);
 
-        Task<List<PetDto>> GetPendingAsync();
+        Task<List<PetDto>> GetPetsAsync(PostsApprovalStatus? status , PetStatusForAdoption? adoptstatus);
 
         //Get my pets (owner)
         Task<List<PetDto>> GetMyPetsAsync(string ownerId);

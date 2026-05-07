@@ -23,5 +23,10 @@ public class UpdatePetDtoValidator : AbstractValidator<UpdatePetDto>
 
         RuleFor(x => x.HealthStatus)
             .NotEmpty().WithMessage("Health status is required");
+
+        RuleFor(x => x.NewImages)
+          .NotNull().WithMessage("At least one image is required")
+          .Must(images => images.Count > 0).WithMessage("At least one image is required")
+          .Must(images => images.Count <= 5).WithMessage("No more than 5 images are allowed");
     }
 }

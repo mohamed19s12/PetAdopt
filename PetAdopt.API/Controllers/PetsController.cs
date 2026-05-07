@@ -27,7 +27,7 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<List<PetDto>>.Success(pets));
         }
 
-        [HttpGet("details/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var pet = await _petService.GetByIdAsync(id);
