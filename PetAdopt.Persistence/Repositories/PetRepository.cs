@@ -11,7 +11,7 @@ namespace PetAdopt.Persistence.Repositories
     {
         public PetRepository(AppDbContext context) : base(context) { }
 
-        // -------------------------
+        // ----------------------
         // CREATE
         // -------------------------
         //public async Task AddAsync(Pet pet)
