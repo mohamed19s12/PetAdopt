@@ -11,36 +11,41 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Persistence.Repositories
 {
-    public class ReviewRepository : IReviewRepository
+    public class ReviewRepository : GenericRepository<Review>, IReviewRepository
     {
-        private readonly AppDbContext _context;
+        public ReviewRepository(AppDbContext context) : base(context) { }
 
-        public ReviewRepository(AppDbContext context)
-        {
-            _context = context;
-        }
+        //public async Task AddAsync(Review review)
+        //{
+        //    await _context.Reviews.AddAsync(review);
+        //}
 
-        public async Task AddAsync(Review review)
-        {
-            await _context.Reviews.AddAsync(review);
-        }
+        //public Task DeleteAsync(Review review)
+        //{
+        //    _context.Reviews.Remove(review);
+        //    return Task.CompletedTask;
+        //}
 
-        public Task DeleteAsync(Review review)
-        {
-            _context.Reviews.Remove(review);
-            return Task.CompletedTask;
-        }
+        //public async Task<Review> GetByIdAsync(int id)
+        //{
+        //   return await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
+        //}
 
-        public async Task<Review> GetByIdAsync(int id)
-        {
-           return await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
-        }
-
-        public async Task<List<Review>> GetByTargetUserIdAsync(string targetUserId)
+        public async Task<List<Review>> GetByPetIdAsync(int petId)
         {
             return await _context.Reviews
                 .Include(r => r.Reviewer)
-                .Where(r => r.TargetUserId == targetUserId)
+                .Where(r => r.PetId == petId)
+                .ToListAsync();
+        }
+
+        public async Task<List<Review>> GetByOwnerIdAsync(string ownerId)
+        {
+            return await _context.Reviews
+                .Include(r => r.Reviewer)
+                .Include(r => r.Pet)
+                    .ThenInclude(p => p.Owner)
+                .Where(r => r.Pet.OwnerId == ownerId)
                 .ToListAsync();
         }
 
@@ -68,9 +73,9 @@ namespace PetAdopt.Persistence.Repositories
             return await _context.Reviews.ToListAsync();
         }
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

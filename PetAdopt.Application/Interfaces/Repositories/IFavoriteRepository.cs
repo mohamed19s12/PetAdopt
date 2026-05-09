@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Interfaces.Repositories
 {
-    public interface IFavoriteRepository
+    public interface IFavoriteRepository : IGenericRepository<Favorite>
     {
         //Adding Favorite Pet to User's Favorite List
-        Task AddAsync(Favorite favorite);
+        //Task AddAsync(Favorite favorite);
         
         //Removing Favorite Pet from User's Favorite List
-        Task RemoveAsync(Favorite favorite);
+        //Task RemoveAsync(Favorite favorite);
         
         //Getting User's Favorite List
         Task<List<Favorite>> GetByUserFavoritesAsync(string userId);
@@ -22,7 +22,7 @@ namespace PetAdopt.Application.Interfaces.Repositories
         Task<Favorite> GetAsync(string userId, int petId);
 
         // Saving Changes to the Database
-        Task SaveChangesAsync();
+        // Task SaveChangesAsync();
 
     }
 }

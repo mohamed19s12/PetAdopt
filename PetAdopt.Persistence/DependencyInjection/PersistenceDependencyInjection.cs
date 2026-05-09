@@ -39,7 +39,6 @@ namespace PetAdopt.Persistence.DependencyInjection
             services.AddScoped<IPetRepository, PetRepository>();
             services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IAdoptionRequestRepository, AdoptionRequestRepository>();
-            services.AddScoped<IPetImageRepository, PetImageRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
 

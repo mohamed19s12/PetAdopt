@@ -12,8 +12,8 @@ using PetAdopt.Persistence.Context;
 namespace PetAdopt.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260503222429_InitCreate")]
-    partial class InitCreate
+    [Migration("20260508212655_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

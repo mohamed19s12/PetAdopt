@@ -7,18 +7,20 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Interfaces.Repositories
 {
-    public interface IReviewRepository
+    public interface IReviewRepository : IGenericRepository<Review>
     {
-        Task AddAsync(Review review);
-        Task<List<Review>> GetByTargetUserIdAsync(string targetUserId);
+        //Task AddAsync(Review review);
         Task<bool> HasAdoptedPetAsync(string adopterId, int petId);
         Task<bool> HasReviewedPetAsync(string reviewerId, int petId);
 
-        Task<Review> GetByIdAsync(int id);
-        Task DeleteAsync(Review review);
+        Task<List<Review>> GetByPetIdAsync(int petId);
+        Task<List<Review>> GetByOwnerIdAsync(string ownerId);
+
+        // Task<Review> GetByIdAsync(int id);
+        //Task DeleteAsync(Review review);
 
         Task<List<Review>> GetAllStatsAsync();
 
-        Task SaveChangesAsync();
+       // Task SaveChangesAsync();
     }
 }

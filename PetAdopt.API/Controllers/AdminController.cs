@@ -147,6 +147,19 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<List<PetDto>>.Success(result));
         }
 
+        [HttpGet("approved-pets")]
+        public async Task<IActionResult> GetApprovedPets()
+        {
+            var result = await _petService.GetApprovedAsync();
+            return Ok(ApiResponse<List<PetDto>>.Success(result));
+        }
+
+        [HttpGet("rejected-pets")]
+        public async Task<IActionResult> GetRejectedPets()
+        {
+            var result = await _petService.GetRejectedAsync();
+            return Ok(ApiResponse<List<PetDto>>.Success(result));
+        }
 
         [HttpPut("approve-pet/{petId}")]
         public async Task<IActionResult> ApprovePet(int petId)

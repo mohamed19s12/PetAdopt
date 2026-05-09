@@ -28,6 +28,16 @@ namespace PetAdopt.Application.Validators
 
             RuleFor(x => x.HealthStatus)
                 .NotEmpty().WithMessage("Health status is required");
+
+            RuleFor(x => x.Description)
+                .NotEmpty().WithMessage("Description is required")
+                .MinimumLength(10).WithMessage("Description must be at least 10 characters")
+                .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters");
+
+            RuleFor(x => x.Images)
+                .NotEmpty().WithMessage("At least one image is required")
+                .Must(x => x.Count <= 5).WithMessage("You can upload up to 5 images")
+                .WithMessage("All files must be images");
         }
     }
 }

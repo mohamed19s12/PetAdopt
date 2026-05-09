@@ -10,19 +10,14 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Persistence.Repositories
 {
-    public class FavoriteRepository : IFavoriteRepository
+    public class FavoriteRepository : GenericRepository<Favorite>, IFavoriteRepository
     {
-        private readonly AppDbContext _context;
+        public FavoriteRepository(AppDbContext context) : base(context) { }
 
-        public FavoriteRepository(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task AddAsync(Favorite favorite)
-        {
-            await _context.Favorites.AddAsync(favorite);
-        }
+        //public async Task AddAsync(Favorite favorite)
+        //{
+        //    await _context.Favorites.AddAsync(favorite);
+        //}
 
         public async Task<Favorite> GetAsync(string userId, int petId)
         {
@@ -35,18 +30,23 @@ namespace PetAdopt.Persistence.Repositories
             //user whose added pets
             return await _context.Favorites
                 .Where(f => f.UserId == userId)
-                .Include(f => f.Pet) 
+                .Include(f => f.Pet)
+                    .ThenInclude(p => p.Images)
+                .Include(f => f.Pet)
+                    .ThenInclude(p => p.Owner)
+                .AsSplitQuery()
+                .AsNoTracking()
                 .ToListAsync();
         }
 
-        public async Task RemoveAsync(Favorite favorite)
-        {
-             _context.Favorites.Remove(favorite);
-        }
+        //public async Task RemoveAsync(Favorite favorite)
+        //{
+        //     _context.Favorites.Remove(favorite);
+        //}
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

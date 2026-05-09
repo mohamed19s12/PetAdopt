@@ -7,22 +7,17 @@ using PetAdopt.Persistence.Context;
 
 namespace PetAdopt.Persistence.Repositories
 {
-    public class PetRepository : IPetRepository
+    public class PetRepository : GenericRepository<Pet>, IPetRepository
     {
-        private readonly AppDbContext _context;
-
-        public PetRepository(AppDbContext context)
-        {
-            _context = context;
-        }
+        public PetRepository(AppDbContext context) : base(context) { }
 
         // -------------------------
         // CREATE
         // -------------------------
-        public async Task AddAsync(Pet pet)
-        {
-            await _context.Pets.AddAsync(pet);
-        }
+        //public async Task AddAsync(Pet pet)
+        //{
+        //    await _context.Pets.AddAsync(pet);
+        //}
 
         // -------------------------
         // DELETE (FIXED)
@@ -53,6 +48,7 @@ namespace PetAdopt.Persistence.Repositories
         {
             return await _context.Pets
                 .Include(p => p.Images)
+                .Include(p => p.Owner)
                 .Where(p => p.Status == PetStatus.Approved
                          || p.Status == PetStatus.Adopted)
                 .ToListAsync();
@@ -65,6 +61,7 @@ namespace PetAdopt.Persistence.Repositories
         {
             return await _context.Pets
                 .Include(p => p.Images)
+                .Include(p => p.Owner)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -86,6 +83,7 @@ namespace PetAdopt.Persistence.Repositories
         {
             return await _context.Pets
                 .Include(p => p.Images)
+                .Include(p => p.Owner)
                 .Where(p => p.OwnerId == ownerId)
                 .ToListAsync();
         }
@@ -93,19 +91,19 @@ namespace PetAdopt.Persistence.Repositories
         // -------------------------
         // UPDATE
         // -------------------------
-        public Task UpdateAsync(Pet pet)
-        {
-            _context.Pets.Update(pet);
-            return Task.CompletedTask;
-        }
+        //public Task UpdateAsync(Pet pet)
+        //{
+        //    _context.Pets.Update(pet);
+        //    return Task.CompletedTask;
+        //}
 
         // -------------------------
         // SAVE
         // -------------------------
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
 
         // -------------------------
         // SEARCH (FIXED & CLEAN)
@@ -174,6 +172,22 @@ namespace PetAdopt.Persistence.Repositories
                 .ToListAsync();
 
             _context.PetImages.RemoveRange(images);
+        }
+
+        public async Task<List<Pet>> GetApprovedAsync()
+        {
+             return await _context.Pets
+            .Include(p => p.Images)
+            .Where(p => p.Status == PetStatus.Approved)
+            .ToListAsync();
+        }
+
+        public async Task<List<Pet>> GetRejectedAsync()
+        {
+            return await _context.Pets
+                .Include(p => p.Images)
+                .Where(p => p.Status == PetStatus.Rejected)
+                .ToListAsync();
         }
     }
 }

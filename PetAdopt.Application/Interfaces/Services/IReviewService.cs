@@ -10,8 +10,9 @@ namespace PetAdopt.Application.Interfaces.Services
     public interface IReviewService
     {
         Task AddReviewAsync(string reviewerId, CreateReviewDto review);
-        Task<List<ReviewDto>> GetReviewsAsync(string targetUserId);
 
+        Task<List<ReviewDto>> GetByPetIdAsync(int petId);
+        Task<List<ReviewDto>> GetByOwnerIdAsync(string ownerId);
         Task UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto);
         Task DeleteReviewAsync(string userId, int reviewId);
     }

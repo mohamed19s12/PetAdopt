@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using PetAdopt.Application.DTOs.Adoption;
 using PetAdopt.Application.DTOs.Auth;
+using PetAdopt.Application.DTOs.NewFolder;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.DTOs.Review;
 using PetAdopt.Domain.Entities;
@@ -23,6 +24,7 @@ namespace PetAdopt.Application.Mapping
             //getting
             CreateMap<Pet, PetDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => src.Owner.FullName))
                 .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images.Select(i => i.ImageUrl)));
 
             //creating , updating
@@ -51,18 +53,13 @@ namespace PetAdopt.Application.Mapping
                 .ForMember(dest => dest.ReviewerName,
                     opt => opt.MapFrom(src => src.Reviewer.FullName));
 
+            CreateMap<CreateReviewDto, Review>()
+                .ForMember(dest => dest.ReviewerId, opt => opt.Ignore());
+
             // Favorite Mappings //
-            CreateMap<Favorite, PetDto>()
-                .ForMember(dest => dest.Id,
-                    opt => opt.MapFrom(src => src.Pet.Id))
-                .ForMember(dest => dest.Name,
-                    opt => opt.MapFrom(src => src.Pet.Name))
-                .ForMember(dest => dest.Breed,
-                    opt => opt.MapFrom(src => src.Pet.Breed))
-                .ForMember(dest => dest.Location,
-                    opt => opt.MapFrom(src => src.Pet.Location))
-                .ForMember(dest => dest.Status,
-                    opt => opt.MapFrom(src => src.Pet.Status.ToString()));
+            CreateMap<Favorite, FavoriteDto>()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id))
+                .ForMember(d => d.Pet, o => o.MapFrom(s => s.Pet));
 
             // Pet Image //
         }

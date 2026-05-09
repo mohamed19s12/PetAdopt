@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Services
 {
-    public class AdoptionService : IAdoptionService
+    public class AdoptionService :  IAdoptionService
     {
         private readonly IAdoptionRequestRepository _AdoptionRepo;
         private readonly IPetRepository _PetRepo;

@@ -297,6 +297,7 @@ namespace PetAdopt.Application.Services
 
         }
 
+
         public async Task<List<PetDto>> GetMyPetsAsync(string ownerId)
         {
             _logger.LogInformation("Retrieving pets for owner: {OwnerId}", ownerId);
@@ -315,6 +316,22 @@ namespace PetAdopt.Application.Services
                 await _cache.RemoveAsync($"pet_{petId}");
 
             _logger.LogInformation("Redis cache invalidated");
+        }
+
+        public async Task<List<PetDto>> GetApprovedAsync()
+        {
+            _logger.LogInformation("Retrieving approved pets for admin panel");
+            var approvedPets = await _petRepository.GetApprovedAsync();
+            _logger.LogInformation("Found {PetCount} approved pets", approvedPets.Count);
+            return approvedPets.Select(p => _mapper.Map<PetDto>(p)).ToList();
+        }
+
+        public async Task<List<PetDto>> GetRejectedAsync()
+        {
+            _logger.LogInformation("Retrieving rejected pets for admin panel");
+            var rejectedPets = await _petRepository.GetRejectedAsync();
+            _logger.LogInformation("Found {PetCount} rejected pets", rejectedPets.Count);
+            return rejectedPets.Select(p => _mapper.Map<PetDto>(p)).ToList();
         }
     }
 }

@@ -30,11 +30,25 @@ namespace PetAdopt.API.Controllers
             return Ok(ApiResponse<object>.Success(null, "Review added successfully"));
         }
 
-        [HttpGet("{targetUserId}")]
-        public async Task<IActionResult> GetReviews(string targetUserId)
+        [HttpGet("pet/{petId}")]
+        public async Task<IActionResult> GetByPet(int petId)
         {
-            var result = await _reviewService.GetReviewsAsync(targetUserId);
-            return Ok(ApiResponse<List<ReviewDto>>.Success(result));
+            var result = await _reviewService.GetByPetIdAsync(petId);
+            return Ok(result);
+        }
+
+        [HttpGet("owner")]
+        [Authorize(Roles = "Owner", Policy = "ApprovedOnly")]
+        public async Task<IActionResult> GetOwnerReviews()
+        {
+            var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (ownerId == null)
+                return Unauthorized();
+
+            var result = await _reviewService.GetByOwnerIdAsync(ownerId);
+
+            return Ok(result);
         }
 
         [HttpPut("{id}")]

@@ -409,17 +409,11 @@ namespace PetAdopt.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("TargetUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("PetId");
 
                     b.HasIndex("ReviewerId");
-
-                    b.HasIndex("TargetUserId");
 
                     b.ToTable("Reviews");
                 });
@@ -560,17 +554,9 @@ namespace PetAdopt.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("PetAdopt.Domain.Entities.ApplicationUser", "TargetUser")
-                        .WithMany()
-                        .HasForeignKey("TargetUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Pet");
 
                     b.Navigation("Reviewer");
-
-                    b.Navigation("TargetUser");
                 });
 
             modelBuilder.Entity("PetAdopt.Domain.Entities.Pet", b =>

@@ -8,17 +8,10 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Persistence.Repositories
 {
-    public class RefreshTokenRepository : IRefreshTokenRepository
+    public class RefreshTokenRepository : GenericRepository<RefreshToken>, IRefreshTokenRepository
     {
-        private readonly AppDbContext _context;
-        public RefreshTokenRepository(AppDbContext context)
-        {
-            _context = context;
-        }
-        public async Task AddAsync(RefreshToken refreshToken)
-        {
-            await _context.RefreshTokens.AddAsync(refreshToken);
-        }
+        public RefreshTokenRepository(AppDbContext context) : base(context) { }
+
         public async Task<RefreshToken> GetByTokenAsync(string token)
         {
             return await _context.RefreshTokens
@@ -33,9 +26,9 @@ namespace PetAdopt.Persistence.Repositories
                 .ToListAsync();
         }
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
+        //public async Task SaveChangesAsync()
+        //{
+        //    await _context.SaveChangesAsync();
+        //}
     }
 }

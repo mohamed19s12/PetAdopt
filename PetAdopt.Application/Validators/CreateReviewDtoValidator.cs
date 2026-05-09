@@ -7,8 +7,8 @@ namespace PetAdopt.Application.Validators
     {
         public CreateReviewDtoValidator()
         {
-            RuleFor(x => x.TargetUserId)
-                .NotEmpty().WithMessage("Target user is required");
+            //RuleFor(x => x.TargetUserId)
+            //    .NotEmpty().WithMessage("Target user is required");
 
             RuleFor(x => x.PetId)
                 .GreaterThan(0).WithMessage("Pet is required");

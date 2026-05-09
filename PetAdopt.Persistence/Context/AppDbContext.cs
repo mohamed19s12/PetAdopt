@@ -29,7 +29,7 @@ namespace PetAdopt.Persistence.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            
+
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.Reviewer)
                 .WithMany()
@@ -37,10 +37,10 @@ namespace PetAdopt.Persistence.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Review>()
-                .HasOne(r => r.TargetUser)
+                .HasOne(r => r.Pet)
                 .WithMany()
-                .HasForeignKey(r => r.TargetUserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasForeignKey(r => r.PetId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Favorite>()
                 .HasOne(f => f.User)

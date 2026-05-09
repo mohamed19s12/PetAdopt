@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Interfaces.Repositories
 {
-    public interface IRefreshTokenRepository
+    public interface IRefreshTokenRepository : IGenericRepository<RefreshToken>
     {
-        Task AddAsync(RefreshToken refreshToken);
+        //Task AddAsync(RefreshToken refreshToken);
         Task<RefreshToken> GetByTokenAsync(string token);
         Task<List<RefreshToken>> GetByUserIdAsync(string userId);
-        Task SaveChangesAsync();
+        //Task SaveChangesAsync();
     }
 }

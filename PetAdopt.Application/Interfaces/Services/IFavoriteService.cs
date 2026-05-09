@@ -1,4 +1,5 @@
-﻿using PetAdopt.Application.DTOs.Pet;
+﻿using PetAdopt.Application.DTOs.NewFolder;
+using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace PetAdopt.Application.Interfaces.Services
     {
         Task AddToFavorites(string userId , int petId);
         Task RemoveFromFavorites(string userId, int petId);
-        Task<List<PetDto>> GetUserFavorites(string userId);
+        Task<List<FavoriteDto>> GetUserFavorites(string userId);
 
     }
 }

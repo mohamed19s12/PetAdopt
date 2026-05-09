@@ -36,7 +36,7 @@ namespace PetAdopt.Application.Services
             var owners = await _userManager.GetUsersInRoleAsync("Owner");
             var adopters = await _userManager.GetUsersInRoleAsync("Adopter");
             var allPets = await _petRepository.GetAllStatsAsync();
-            var allRequests = await _adoptionRepository.GetAllStatsAsync();
+            var allRequests = await _adoptionRepository.GetAllAsync();
             var allReviews = await _reviewRepository.GetAllStatsAsync();
 
             return new DashboardDto

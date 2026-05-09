@@ -25,7 +25,6 @@ namespace PetAdopt.Application.DependencyInjection
             services.AddScoped<IPetService , PetService>();
             services.AddScoped<IFavoriteService, FavoriteService>();
             services.AddScoped<IAdoptionService, AdoptionService>();
-            services.AddScoped<IPetImageService , PetImageService>();
             services.AddScoped<IReviewService, ReviewService>();
             services.AddScoped<IDashboardService, DashboardService>();
 

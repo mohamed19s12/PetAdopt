@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PetAdopt.Application.Interfaces.Services
 {
-    public interface ITokenService
+    public interface ITokenService 
     {
         Task<string> CreateAccessToken(ApplicationUser user);
         Task<string> CreateRefreshToken();

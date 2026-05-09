@@ -31,7 +31,7 @@ namespace PetAdopt.Application.Services
 
         public async Task AddReviewAsync(string reviewerId, CreateReviewDto reviewDto)
         {
-            _logger.LogInformation("Adding review for TargetUserId: {TargetUserId} by ReviewerId: {ReviewerId}", reviewDto.TargetUserId, reviewerId);
+            _logger.LogInformation("Adding review for TargetUserId: by ReviewerId: {ReviewerId}", reviewerId);
             if (reviewDto.Rating < 1 || reviewDto.Rating > 5)
             {
                 _logger.LogWarning("Invalid rating: {Rating}", reviewDto.Rating);
@@ -58,7 +58,7 @@ namespace PetAdopt.Application.Services
             await _reviewRepository.AddAsync(review);
             await _reviewRepository.SaveChangesAsync();
 
-            await _cache.RemoveAsync($"reviews_{reviewDto.TargetUserId}");
+            //await _cache.RemoveAsync($"reviews_{reviewDto.TargetUserId}");
             _logger.LogInformation(
                 "Review added by User {ReviewerId} for Pet: {PetId}",
                 reviewerId, reviewDto.PetId);
@@ -81,36 +81,33 @@ namespace PetAdopt.Application.Services
 
             await _reviewRepository.DeleteAsync(review);
             await _reviewRepository.SaveChangesAsync();
-            await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
+            //await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
         }
 
-        public async Task<List<ReviewDto>> GetReviewsAsync(string targetUserId)
+        public async Task<List<ReviewDto>> GetByPetIdAsync(int petId)
         {
-            var cacheKey = $"reviews_{targetUserId}";
+            var reviews = await _reviewRepository.GetByPetIdAsync(petId);
 
-            var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (cachedData != null)
-            {
-                _logger.LogInformation("Returning reviews for User {UserId} from Redis", targetUserId);
-                return JsonSerializer.Deserialize<List<ReviewDto>>(cachedData);
-            }
-
-            _logger.LogInformation("Getting reviews for TargetUserId: {TargetUserId}", targetUserId);
-            var reviews = await _reviewRepository.GetByTargetUserIdAsync(targetUserId);
-            var result = reviews.Select(r => new ReviewDto
+            return reviews.Select(r => new ReviewDto
             {
                 Id = r.Id,
                 ReviewerName = r.Reviewer.FullName,
                 Rating = r.Rating,
                 Comment = r.Comment
             }).ToList();
+        }
 
-            await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+        public async Task<List<ReviewDto>> GetByOwnerIdAsync(string ownerId)
+        {
+            var reviews = await _reviewRepository.GetByOwnerIdAsync(ownerId);
+
+            return reviews.Select(r => new ReviewDto
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-            });
-
-            return result;
+                Id = r.Id,
+                ReviewerName = r.Reviewer.FullName,
+                Rating = r.Rating,
+                Comment = r.Comment
+            }).ToList();
         }
 
         public async Task UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto)
@@ -137,10 +134,10 @@ namespace PetAdopt.Application.Services
             review.Comment = dto.Comment;
 
             await _reviewRepository.SaveChangesAsync();
-            await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
-                _logger.LogInformation(
-                    "Review with Id {ReviewId} updated by User {UserId}",
-                    reviewId, userId);
+            //await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
+            //    _logger.LogInformation(
+            //        "Review with Id {ReviewId} updated by User {UserId}",
+            //        reviewId, userId);
         }
     }
 }

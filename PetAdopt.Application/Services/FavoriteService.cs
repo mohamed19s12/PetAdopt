@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using PetAdopt.Application.DTOs.NewFolder;
 using PetAdopt.Application.DTOs.Pet;
 using PetAdopt.Application.Interfaces.Repositories;
 using PetAdopt.Application.Interfaces.Services;
@@ -54,7 +55,7 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Pet: {PetId} added to favorites for user: {UserId} , cache invalidated", petId, userId);
         }
 
-        public async Task<List<PetDto>> GetUserFavorites(string userId)
+        public async Task<List<FavoriteDto>> GetUserFavorites(string userId)
         {
             var cacheKey = $"favorites_{userId}";
 
@@ -62,14 +63,14 @@ namespace PetAdopt.Application.Services
             if (cachedData != null)
             {
                 _logger.LogInformation("Returning favorites for User {UserId} from Redis", userId);
-                return JsonSerializer.Deserialize<List<PetDto>>(cachedData);
+                return JsonSerializer.Deserialize<List<FavoriteDto>>(cachedData);
             }
 
             _logger.LogInformation("Retrieving favorites for user: {UserId}", userId);
             var favorites = await _favoriteRepository.GetByUserFavoritesAsync(userId);
 
             //f => Each Favorite that i Take Pet from it
-            var result = favorites.Select(p => _mapper.Map<PetDto>(p)).ToList();
+            var result = favorites.Select(p => _mapper.Map<FavoriteDto>(p)).ToList();
 
             await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
             {
@@ -93,7 +94,7 @@ namespace PetAdopt.Application.Services
             }
 
             //remove it if exists and save changes
-            await _favoriteRepository.RemoveAsync(favorite);
+            await _favoriteRepository.DeleteAsync(favorite);
             await _favoriteRepository.SaveChangesAsync();
 
             await _cache.RemoveAsync($"favorites_{userId}");
