@@ -124,6 +124,7 @@ namespace PetAdopt.Persistence.Repositories
                 query = query.Where(p =>
                     p.Name.ToLower().Contains(term) ||
                     p.Breed.ToLower().Contains(term) ||
+                    p.Location.ToLower().Contains(term) ||
                     p.Description.ToLower().Contains(term));
             }
 

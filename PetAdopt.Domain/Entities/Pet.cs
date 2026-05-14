@@ -25,6 +25,6 @@ namespace PetAdopt.Domain.Entities
         public PetStatus Status { get; set; } = PetStatus.Pending;
 
         //Animal type for Searching and Filtering
-        public string? AnimalType { get; set; }
+        //public string? AnimalType { get; set; }
     }
 }

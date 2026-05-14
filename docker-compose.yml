@@ -9,7 +9,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://0.0.0.0:8080"
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PetAdoptDb;User Id=sa;Password=Your@Password123;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PetAdoptDb;User Id=sa;Password=YourStrong@Pass123;TrustServerCertificate=True;MultipleActiveResultSets=True"
       JWT__Key: "JF;L f;LF jo;pfjJ 946&$ *Q3 U74 fef*pru#*&yc yr#*&c"
       JWT__Issuer: "PetAdopt"
       JWT__Audience: "PetAdoptUsers"
@@ -36,13 +36,13 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Developer"
-      SA_PASSWORD: "Your@Password123"
+      SA_PASSWORD: "YourStrong@Pass123"
     ports:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Your@Password123' -Q 'SELECT 1' -No -C"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Pass123' -Q 'SELECT 1' -No -C"]
       interval: 15s
       timeout: 10s
       retries: 15

@@ -13,7 +13,7 @@ namespace PetAdopt.Application.Interfaces.Services
 
         Task<List<ReviewDto>> GetByPetIdAsync(int petId);
         Task<List<ReviewDto>> GetByOwnerIdAsync(string ownerId);
-        Task UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto);
+        Task<ReviewDto> UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto);
         Task DeleteReviewAsync(string userId, int reviewId);
     }
 }

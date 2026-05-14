@@ -104,13 +104,14 @@ namespace PetAdopt.Application.Services
             return reviews.Select(r => new ReviewDto
             {
                 Id = r.Id,
+                PetId = r.PetId,
                 ReviewerName = r.Reviewer.FullName,
                 Rating = r.Rating,
                 Comment = r.Comment
             }).ToList();
         }
 
-        public async Task UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto)
+        public async Task<ReviewDto> UpdateReviewAsync(string userId, int reviewId, UpdateReviewDto dto)
         {
             var review =await _reviewRepository.GetByIdAsync(reviewId);
           
@@ -134,10 +135,14 @@ namespace PetAdopt.Application.Services
             review.Comment = dto.Comment;
 
             await _reviewRepository.SaveChangesAsync();
-            //await _cache.RemoveAsync($"reviews_{review.TargetUserId}");
-            //    _logger.LogInformation(
-            //        "Review with Id {ReviewId} updated by User {UserId}",
-            //        reviewId, userId);
+
+            return new ReviewDto
+            {
+                Id = review.Id,
+                PetId = review.PetId,
+                Rating = review.Rating,
+                Comment = review.Comment
+            };
         }
     }
 }

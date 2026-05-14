@@ -58,8 +58,8 @@ namespace PetAdopt.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            await _reviewService.UpdateReviewAsync(userId, id, dto);
-            return Ok(ApiResponse<object>.Success(null, "Review updated successfully"));
+            var updatedReview = await _reviewService.UpdateReviewAsync(userId, id, dto);
+            return Ok(ApiResponse<ReviewDto>.Success(updatedReview, "Review updated successfully"));
         }
 
         [HttpDelete("{id}")]

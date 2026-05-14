@@ -18,7 +18,6 @@ namespace PetAdopt.Persistence.Repositories
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(r => r.Token == token);
         }
-
         public async Task<List<RefreshToken>> GetByUserIdAsync(string userId)
         {
             return await _context.RefreshTokens

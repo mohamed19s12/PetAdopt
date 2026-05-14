@@ -25,7 +25,7 @@ namespace PetAdopt.Application.Services
         private readonly IFileService _fileService;
 
 
-        private const string PetsCacheKey = "all_pets";
+        //private const string PetsCacheKey = "all_pets";
 
         public PetService(IPetRepository petRepository, INotificationService notificationService, ILogger<PetService> logger, IDistributedCache cache, IMapper mapper, IFileService fileService)
         {
@@ -70,7 +70,7 @@ namespace PetAdopt.Application.Services
                 await _petRepository.SaveChangesAsync();
             }
 
-            await InvalidateCacheAsync();
+            //await InvalidateCacheAsync();
 
             return pet.Id;
         }
@@ -99,23 +99,23 @@ namespace PetAdopt.Application.Services
             await _notificationService.SendNotificationAsync(
                 pet.OwnerId, $" Your pet {pet.Name} has been approved and is now visible!");
 
-            await InvalidateCacheAsync(petId);
+            //await InvalidateCacheAsync(petId);
         }
 
         public async Task<List<PetDto>> GetAllAsync()
         {
             //Get Data from Cache if exixts
-            var cachedData = await _cache.GetStringAsync(PetsCacheKey);
-            if (cachedData != null)
-            {
-                _logger.LogInformation("Returning pets from Redis cache");
-                return JsonSerializer.Deserialize<List<PetDto>>(
-                    cachedData,
-                    new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    })!;
-            }
+            //var cachedData = await _cache.GetStringAsync(PetsCacheKey);
+            //if (cachedData != null)
+            //{
+            //    _logger.LogInformation("Returning pets from Redis cache");
+            //    return JsonSerializer.Deserialize<List<PetDto>>(
+            //        cachedData,
+            //        new JsonSerializerOptions
+            //        {
+            //            PropertyNameCaseInsensitive = true
+            //        })!;
+            //}
 
             _logger.LogInformation("Retrieving all pets");
             var pets = await _petRepository.GetAllAsync();
@@ -124,30 +124,30 @@ namespace PetAdopt.Application.Services
             var result = _mapper.Map<List<PetDto>>(pets);
 
             //Store Data in Cache for 5 minutes
-            await _cache.SetStringAsync(PetsCacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-            });
+            //await _cache.SetStringAsync(PetsCacheKey, JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+            //{
+            //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            //});
 
-            _logger.LogInformation("Pets cached in Redis for 5 minutes");
+            //_logger.LogInformation("Pets cached in Redis for 5 minutes");
             return result;
         }
 
         public async Task<PetDto> GetByIdAsync(int petId)
         {
-            var cacheKey = $"pet_{petId}";
+            //var cacheKey = $"pet_{petId}";
 
-            var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (cachedData != null)
-            {
-                _logger.LogInformation("Returning pet {PetId} from Redis cache", petId);
-                return JsonSerializer.Deserialize<PetDto>(
-                    cachedData,
-                    new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    })!;
-            }
+            //var cachedData = await _cache.GetStringAsync(cacheKey);
+            //if (cachedData != null)
+            //{
+            //    _logger.LogInformation("Returning pet {PetId} from Redis cache", petId);
+            //    return JsonSerializer.Deserialize<PetDto>(
+            //        cachedData,
+            //        new JsonSerializerOptions
+            //        {
+            //            PropertyNameCaseInsensitive = true
+            //        })!;
+            //}
 
             _logger.LogInformation("Retrieving pet by Id: {PetId}", petId);
             var pet = await _petRepository.GetByIdAsync(petId);
@@ -161,10 +161,10 @@ namespace PetAdopt.Application.Services
             var result =  _mapper.Map<PetDto>(pet);
 
 
-            await _cache.SetStringAsync(cacheKey , JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-            });
+            //await _cache.SetStringAsync(cacheKey , JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+            //{
+            //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            //});
             return result;
         }
 
@@ -219,7 +219,7 @@ namespace PetAdopt.Application.Services
             await _petRepository.SaveChangesAsync();
             _logger.LogInformation("Pet updated: {PetName} (Id: {PetId})", pet.Name, pet.Id);
 
-            await InvalidateCacheAsync(petId);
+            //await InvalidateCacheAsync(petId);
 
         }
 
@@ -242,7 +242,7 @@ namespace PetAdopt.Application.Services
             await _petRepository.SaveChangesAsync();
             _logger.LogInformation("Pet deleted: {PetName} (Id: {PetId})", pet.Name, pet.Id);
 
-            await InvalidateCacheAsync(petId);
+            //await InvalidateCacheAsync(petId);
         }
 
         public async Task<PageResultDto<PetDto>> SearchAsync(PetFilterDto filter)
@@ -285,9 +285,10 @@ namespace PetAdopt.Application.Services
             await _notificationService.SendNotificationAsync(
                 pet.OwnerId, $" Your pet {pet.Name} has been rejected");
 
-            await InvalidateCacheAsync(petId);
+            //await InvalidateCacheAsync(petId);
         }
 
+        //admin
         public async Task<List<PetDto>> GetPendingAsync()
         {
             _logger.LogInformation("Retrieving pending pets for admin panel");
@@ -297,7 +298,7 @@ namespace PetAdopt.Application.Services
 
         }
 
-
+        //owner
         public async Task<List<PetDto>> GetMyPetsAsync(string ownerId)
         {
             _logger.LogInformation("Retrieving pets for owner: {OwnerId}", ownerId);
@@ -308,15 +309,17 @@ namespace PetAdopt.Application.Services
 
 
         // Invalidate Cache After Create, Update, Delete, Approve, Reject
-        private async Task InvalidateCacheAsync(int? petId = null)
-        {
-            await _cache.RemoveAsync(PetsCacheKey);
+        //private async Task InvalidateCacheAsync(int? petId = null)
+        //{
+        //    await _cache.RemoveAsync(PetsCacheKey);
 
-            if (petId.HasValue)
-                await _cache.RemoveAsync($"pet_{petId}");
+        //    if (petId.HasValue)
+        //        await _cache.RemoveAsync($"pet_{petId}");
 
-            _logger.LogInformation("Redis cache invalidated");
-        }
+        //    _logger.LogInformation("Redis cache invalidated");
+        //}
+
+        //admin
 
         public async Task<List<PetDto>> GetApprovedAsync()
         {
@@ -325,7 +328,7 @@ namespace PetAdopt.Application.Services
             _logger.LogInformation("Found {PetCount} approved pets", approvedPets.Count);
             return approvedPets.Select(p => _mapper.Map<PetDto>(p)).ToList();
         }
-
+        //admin
         public async Task<List<PetDto>> GetRejectedAsync()
         {
             _logger.LogInformation("Retrieving rejected pets for admin panel");

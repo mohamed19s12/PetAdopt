@@ -19,8 +19,8 @@ namespace PetAdopt.Domain.Entities
 
         public bool IsRevoked { get; set; } = false;
 
-        public string UserId { get; set; }
 
+        public string UserId { get; set; }
         public ApplicationUser User { get; set; }
     }
 }
